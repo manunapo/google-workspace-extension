@@ -1,11 +1,11 @@
 import ReactDOM from 'react-dom';
-import AudioRecorder from './components/AudioRecorder';
+import SpeechToText from './components/SpeechToText';
 import '../styles.css';
 
 const App = () => {
   return (
     <>
-      <AudioRecorder />
+      <SpeechToText />
     </>
   );
 };

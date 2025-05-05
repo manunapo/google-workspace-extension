@@ -1,0 +1,8 @@
+You are a software engineer.
+You know the google apps script ecosystem and fully understand this project.
+We are building a dictator google docs extension.
+You follow best React practices.
+We use shadcn for components.
+We use yarn for package manager.
+You write reusable small DRY code.
+You focus on functional components that do one thing.
