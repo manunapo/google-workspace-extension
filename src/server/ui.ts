@@ -4,19 +4,19 @@ export const openAboutUsDialog = () => {
   const html = HtmlService.createHtmlOutputFromFile('about')
     .setWidth(600)
     .setHeight(350);
-  DocumentApp.getUi().showModalDialog(html, 'HeySam for Google Sheets™');
+  DocumentApp.getUi().showModalDialog(html, EXTENSION_NAME);
 };
 
 export const openHelpDialog = () => {
   const html = HtmlService.createHtmlOutputFromFile('quickstart')
     .setWidth(600)
     .setHeight(350);
-  DocumentApp.getUi().showModalDialog(html, 'HeySam for Google Sheets™');
+  DocumentApp.getUi().showModalDialog(html, EXTENSION_NAME);
 };
 
 export const openSidebar = () => {
   const html =
-    HtmlService.createHtmlOutputFromFile('launch').setTitle(EXTENSION_NAME);
+    HtmlService.createHtmlOutputFromFile('sidebar').setTitle(EXTENSION_NAME);
   DocumentApp.getUi().showSidebar(html);
 };
 

@@ -43,7 +43,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
   const [interimTranscript, setInterimTranscript] = useState<string>('');
   const [autoSaving, setAutoSaving] = useState<boolean>(false);
   const [lastProcessedText, setLastProcessedText] = useState<string>('');
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const recognitionRef = useRef<any>(null);
@@ -51,8 +51,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
   // Initialize speech recognition
   useEffect(() => {
     // Check if speech recognition is supported
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
     if (!SpeechRecognition) {
       console.error('Speech recognition not supported in this browser');
       return;
@@ -186,7 +187,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
       mediaRecorderRef.current.stream
         .getTracks()
         .forEach((track: MediaStreamTrack) => track.stop());
-      
+
       // Stop transcription
       if (recognitionRef.current) {
         setIsTranscribing(false);
@@ -231,7 +232,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
         {/* Status indicator */}
         {isRecording && (
           <div className="flex items-center mt-2 text-sm">
-            <div 
+            <div
               className={`h-2 w-2 rounded-full mr-2 ${
                 autoSaving ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'
               }`}
@@ -245,7 +246,10 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
         {/* Transcription display area */}
         <div className="w-full mt-4">
           <div className="font-medium text-gray-700 mb-2">
-            Transcription: <span className="text-xs text-gray-500">(auto-inserted at cursor position)</span>
+            Transcription:{' '}
+            <span className="text-xs text-gray-500">
+              (auto-inserted at cursor position)
+            </span>
           </div>
           <div className="border rounded-md p-3 bg-gray-50 min-h-[100px] max-h-[200px] overflow-y-auto text-sm">
             {transcript}
