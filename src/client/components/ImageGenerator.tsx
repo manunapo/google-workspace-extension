@@ -84,6 +84,22 @@ const ImageGenerator: React.FC = () => {
     setPrompt(selectedPrompt);
   };
 
+  const handleToggleCreate = () => {
+    setShowCreate(!showCreate);
+    if (!showCreate) {
+      // If we're opening Create, close Edit
+      setShowEdit(false);
+    }
+  };
+
+  const handleToggleEdit = () => {
+    setShowEdit(!showEdit);
+    if (!showEdit) {
+      // If we're opening Edit, close Create
+      setShowCreate(false);
+    }
+  };
+
   const handleGenerate = async () => {
     let imageData = null;
     if (selectedImage) {
@@ -122,7 +138,7 @@ const ImageGenerator: React.FC = () => {
           {/* Create Subsection */}
           <div className="mb-3">
             <button
-              onClick={() => setShowCreate(!showCreate)}
+              onClick={handleToggleCreate}
               className="w-full flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors"
             >
               <div className="flex items-center gap-2">
@@ -162,7 +178,7 @@ const ImageGenerator: React.FC = () => {
           {/* Edit Subsection */}
           <div>
             <button
-              onClick={() => setShowEdit(!showEdit)}
+              onClick={handleToggleEdit}
               className="w-full flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors"
             >
               <div className="flex items-center gap-2">
@@ -202,7 +218,7 @@ const ImageGenerator: React.FC = () => {
         </div>
 
         {/* Main Prompt Section */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mt-4">
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
             <h2 className="text-sm font-medium text-gray-800">
@@ -213,14 +229,14 @@ const ImageGenerator: React.FC = () => {
             placeholder="What would you like to create? Be as detailed as possible..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="resize-y min-h-[80px] max-h-[200px] border-gray-200 focus:border-blue-400 focus:ring-blue-400"
+            className="resize-y min-h-[120px] max-h-[200px] border-gray-200 focus:border-blue-400 focus:ring-blue-400"
             disabled={generationState.isGenerating}
           />
         </div>
 
         {/* Reference Image Section */}
         {selectedImage ? (
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mt-4">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -243,7 +259,7 @@ const ImageGenerator: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mt-4">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
               <h2 className="text-sm font-medium text-gray-800">
@@ -268,7 +284,7 @@ const ImageGenerator: React.FC = () => {
         )}
 
         {/* Advanced Settings */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mt-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-xl transition-colors"
@@ -328,9 +344,7 @@ const ImageGenerator: React.FC = () => {
 
         {/* Generated Image Display */}
         {generationState.generatedImage && (
-          <div className="mt-4">
-            <GeneratedImageDisplay imageData={generationState.generatedImage} />
-          </div>
+          <GeneratedImageDisplay imageData={generationState.generatedImage} />
         )}
       </div>
 
@@ -342,7 +356,7 @@ const ImageGenerator: React.FC = () => {
           className="w-full h-12 text-base font-medium bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg"
         >
           {generationState.isGenerating ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center text-white gap-2">
               <Spinner size="sm" />
               <span>Creating magic...</span>
             </div>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Download, FileImage, Sparkles, CheckCircle } from 'lucide-react';
+import { Download, FileImage, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
 import { serverFunctions } from '../utils/serverFunctions';
 import { useToast } from '../hooks/useToast';
@@ -49,23 +49,6 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
     <div
       className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden ${className}`}
     >
-      {/* Success Header */}
-      <div className="bg-gradient-to-r from-green-50 to-blue-50 border-b border-green-200 p-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-            <CheckCircle className="w-4 h-4 text-green-600" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-green-800">
-              Image Generated Successfully!
-            </h3>
-            <p className="text-xs text-green-600">
-              Your AI-generated image is ready to use
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Image Display */}
       <div className="p-4">
         <div className="relative group">
@@ -74,11 +57,6 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
             alt="AI Generated"
             className="w-full rounded-lg shadow-md border border-gray-200 transition-transform group-hover:scale-[1.02]"
           />
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <div className="bg-white bg-opacity-90 px-3 py-1 rounded-full text-xs font-medium text-gray-700">
-              Click to view full size
-            </div>
-          </div>
         </div>
 
         {/* Action Buttons */}
