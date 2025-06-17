@@ -47,13 +47,15 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "gas-client": "^1.2.0",
-    "lucide-react": "^0.511.0",
+    "gas-entry-generator": "^2.6.0",
+    "lucide-react": "^0.516.0",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-bootstrap": "^2.4.0",
     "react-dom": "^18.2.0",
     "react-speech-recognition": "^4.0.1",
     "react-transition-group": "^4.4.2",
+    "sonner": "^2.0.5",
     "tailwind-merge": "^3.2.0"
   },
   "devDependencies": {

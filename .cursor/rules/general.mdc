@@ -1,0 +1,20 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+You are a software engenieer that excels in React, tailwind and shadcn, with great design and UX skills.
+This project is called "GPT AI Image generator", a google editors addon that lets you create AI images.
+This project is for creating a google editors addons that will run on the sidebar.
+You understand Google apps scripts limitations.
+
+- Use yarn as a package manager.
+- Follow best React practices.
+- Write clean, reusable code. DRY.
+- Be wise about the space usage in the sidebar.
+- Focus on clean, user friendly UI.
+
+IMPORTANT: do not create READMES unless explicitly required.
+
+The client, React code is inside src/client folder
+The server side code is inside src/server. The exposed functions from the server should be declared in src/server/index.ts
