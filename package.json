@@ -21,8 +21,8 @@
     "build:dev": "tsc && vite build --mode development",
     "build": "tsc && vite build --mode production",
     "deploy:dev": "yarn build:dev && yarn push",
-    "deploy": "yarn build && yarn push",
-    "start": "yarn deploy:dev && yarn dev"
+    "deploy": "echo 'Dont forget nvm use 18' && yarn build && yarn push",
+    "start": "echo 'Dont forget nvm use 18' && yarn deploy:dev && yarn dev"
   },
   "keywords": [
     "react",
@@ -41,14 +41,18 @@
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
     "@mui/material": "^5.11.11",
+    "@radix-ui/react-select": "^2.2.4",
     "@radix-ui/react-slot": "^1.2.0",
+    "@types/react-speech-recognition": "^3.9.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "gas-client": "^1.2.0",
+    "lucide-react": "^0.511.0",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-bootstrap": "^2.4.0",
     "react-dom": "^18.2.0",
+    "react-speech-recognition": "^4.0.1",
     "react-transition-group": "^4.4.2",
     "tailwind-merge": "^3.2.0"
   },

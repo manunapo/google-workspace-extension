@@ -20,8 +20,4 @@ export const insertTextToDoc = (text: string): void => {
     // No cursor, append to body
     doc.getBody().appendParagraph(text);
   }
-
-  // Save changes (not needed in most cases as Apps Script auto-saves)
-  // but helps ensure changes are committed
-  doc.saveAndClose();
 };

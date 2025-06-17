@@ -1,162 +1,60 @@
 import React, { useState, useRef, useEffect } from 'react';
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from 'react-speech-recognition';
 import { serverFunctions } from '../../utils/serverFunctions';
 import { Button } from '../../components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
 
-// Define SpeechRecognition types
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognitionResult {
-  isFinal: boolean;
-  length: number;
-  [index: number]: SpeechRecognitionAlternative;
-}
-
-interface SpeechRecognitionResultList {
-  length: number;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionEvent extends Event {
-  resultIndex: number;
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onerror: (event: SpeechRecognitionErrorEvent) => void;
-  onend: () => void;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
+// Define language options
+const languageOptions = [
+  { value: 'en-US', label: 'English (US)' },
+  { value: 'en-GB', label: 'English (UK)' },
+  { value: 'es-ES', label: 'Spanish' },
+  { value: 'fr-FR', label: 'French' },
+  { value: 'de-DE', label: 'German' },
+  { value: 'it-IT', label: 'Italian' },
+  { value: 'pt-BR', label: 'Portuguese (Brazil)' },
+  { value: 'zh-CN', label: 'Chinese (Simplified)' },
+  { value: 'ja-JP', label: 'Japanese' },
+  { value: 'ko-KR', label: 'Korean' },
+  { value: 'ru-RU', label: 'Russian' },
+  { value: 'nl-NL', label: 'Dutch' },
+];
 
 const SpeechToText: React.FC = () => {
-  const [isListening, setIsListening] = useState<boolean>(false);
-  const [transcript, setTranscript] = useState<string>('');
-  const [interimTranscript, setInterimTranscript] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [audioLevel, setAudioLevel] = useState<number>(0);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [language, setLanguage] = useState<string>('en-US');
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const lastProcessedTextRef = useRef<string>('');
 
-  // Initialize speech recognition
+  // Use the react-speech-recognition hook with continuous listening
+  const {
+    transcript,
+    listening: isListening,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+    isMicrophoneAvailable,
+  } = useSpeechRecognition({
+    clearTranscriptOnListen: false, // Don't clear automatically
+  });
+
+  // Check if browser supports speech recognition
   useEffect(() => {
-    // Check if speech recognition is supported
-    const SpeechRecognitionCtor =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognitionCtor) {
+    if (!browserSupportsSpeechRecognition) {
       setError('Speech recognition is not supported in this browser');
-      return;
     }
-
-    // Create speech recognition instance
-    const recognition = new SpeechRecognitionCtor();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    // Set up event handlers
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interimText = '';
-      let finalText = transcript;
-
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          finalText = finalText.concat(result[0].transcript, ' ');
-        } else {
-          interimText += result[0].transcript;
-        }
-      }
-
-      setInterimTranscript(interimText);
-      setTranscript(finalText);
-    };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('Speech recognition error:', event.error);
-      setError(`Recognition error: ${event.error}`);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      if (isListening) {
-        // Restart if we're still supposed to be listening
-        recognition.start();
-      }
-    };
-
-    recognitionRef.current = recognition;
-
-    const cleanup = () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
-    };
-
-    cleanup();
-  }, [transcript, isListening]);
-
-  // Effect for auto-inserting text into document
-  useEffect(() => {
-    const autoInsertText = async () => {
-      // Only process if we have new final text (not interim) and we're listening
-      if (
-        isListening &&
-        transcript &&
-        transcript !== lastProcessedTextRef.current
-      ) {
-        try {
-          setIsSaving(true);
-          // Calculate the new text that hasn't been sent yet
-          const newText = transcript.substring(
-            lastProcessedTextRef.current.length
-          );
-          if (newText.trim()) {
-            await serverFunctions.insertTextToDoc(newText);
-            lastProcessedTextRef.current = transcript;
-          }
-        } catch (err) {
-          console.error('Error inserting text to document:', err);
-          setError('Failed to insert text at cursor position');
-        } finally {
-          setIsSaving(false);
-        }
-      }
-    };
-
-    autoInsertText();
-  }, [transcript, isListening]);
+  }, [browserSupportsSpeechRecognition]);
 
   // Set up audio visualization
   const setupAudioVisualization = async () => {
@@ -199,38 +97,49 @@ const SpeechToText: React.FC = () => {
       setError(
         'Error accessing your microphone. Please check permissions and try again.'
       );
-      setIsListening(false);
     }
   };
 
   const startListening = async () => {
-    setError(null);
-    setTranscript('');
-    setInterimTranscript('');
-    lastProcessedTextRef.current = '';
-    setIsListening(true);
+    try {
+      setError(null);
+      resetTranscript();
 
-    // Start audio visualization
-    await setupAudioVisualization();
+      // Start audio visualization
+      await setupAudioVisualization();
 
-    // Start recognition
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.start();
-      } catch (err) {
-        console.error('Error starting speech recognition:', err);
-        setError('Failed to start speech recognition');
-        setIsListening(false);
-      }
+      // Start the speech recognition with continuous mode
+      await SpeechRecognition.startListening({
+        continuous: true,
+        language: language, // Use selected language
+      });
+
+      console.log(`Speech recognition started with language: ${language}`);
+    } catch (err) {
+      console.error('Failed to start speech recognition:', err);
+      setError('Failed to start speech recognition');
     }
   };
 
-  const stopListening = () => {
-    setIsListening(false);
+  const stopListening = async () => {
+    // First, stop listening
+    await SpeechRecognition.stopListening();
+    console.log('Speech recognition stopped');
 
-    // Stop recognition
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
+    // Process the final transcript
+    try {
+      if (transcript && transcript.trim() !== '') {
+        setIsSaving(true);
+        // Add the full transcript to the document
+        await serverFunctions.insertTextToDoc(`${transcript} `);
+        // Reset for next recording
+        resetTranscript();
+        setIsSaving(false);
+      }
+    } catch (err) {
+      console.error('Error inserting text to document:', err);
+      setError('Failed to insert text to document');
+      setIsSaving(false);
     }
 
     // Stop audio visualization
@@ -245,6 +154,32 @@ const SpeechToText: React.FC = () => {
       streamRef.current = null;
     }
   };
+
+  // Handle language change
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    // If currently listening, restart with new language
+    if (isListening) {
+      SpeechRecognition.stopListening().then(() => {
+        startListening();
+      });
+    }
+  };
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+
+      SpeechRecognition.abortListening();
+    };
+  }, []);
 
   // Generate visualization bars based on audio level
   const generateVisualizationBars = () => {
@@ -263,6 +198,29 @@ const SpeechToText: React.FC = () => {
     ));
   };
 
+  // If browser doesn't support speech recognition
+  if (!browserSupportsSpeechRecognition) {
+    return (
+      <div className="w-full p-4 rounded-lg bg-white shadow-sm border border-gray-100">
+        <div className="p-3 bg-red-50 border border-red-100 rounded text-red-600">
+          Your browser doesn't support speech recognition.
+        </div>
+      </div>
+    );
+  }
+
+  // If microphone is not available
+  if (!isMicrophoneAvailable) {
+    return (
+      <div className="w-full p-4 rounded-lg bg-white shadow-sm border border-gray-100">
+        <div className="p-3 bg-yellow-50 border border-yellow-100 rounded text-yellow-600">
+          Microphone access is needed for speech recognition. Please check your
+          browser permissions.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full p-4 rounded-lg bg-white shadow-sm border border-gray-100">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
@@ -270,6 +228,37 @@ const SpeechToText: React.FC = () => {
       </h2>
 
       <div className="flex flex-col space-y-4">
+        {/* Language selector */}
+        <div className="mb-2">
+          <label
+            htmlFor="language"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Language
+          </label>
+          <Select
+            value={language}
+            onValueChange={handleLanguageChange}
+            disabled={isListening}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Language" />
+            </SelectTrigger>
+            <SelectContent>
+              {languageOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {isListening && (
+            <p className="text-xs text-amber-600 mt-1">
+              To change language, stop recording first
+            </p>
+          )}
+        </div>
+
         {/* Recording status and visualization */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center">
@@ -301,11 +290,10 @@ const SpeechToText: React.FC = () => {
         </Button>
 
         {/* Transcription display */}
-        {(transcript || interimTranscript) && (
+        {transcript && (
           <div className="mt-4 p-3 bg-gray-50 rounded-md border border-gray-200">
             <p className="text-sm text-gray-700 whitespace-pre-wrap">
               {transcript}
-              <span className="text-gray-400">{interimTranscript}</span>
             </p>
           </div>
         )}
@@ -313,11 +301,25 @@ const SpeechToText: React.FC = () => {
         {/* Status message */}
         <p className="text-xs text-gray-500 mt-2 text-center">
           {isSaving ? (
-            <span className="text-blue-500">Writing to cursor position...</span>
+            <span className="text-blue-500">Writing to document...</span>
           ) : (
-            <span>Transcribed text will be written at cursor position</span>
+            <span>Speak, then stop recording to insert text at cursor</span>
           )}
         </p>
+
+        {/* Instructions */}
+        <div className="text-xs text-gray-600 mt-1 p-2 bg-blue-50 rounded-md border border-blue-100">
+          <p>
+            <strong>How to use:</strong>
+          </p>
+          <ol className="list-decimal list-inside space-y-1 mt-1">
+            <li>Select your language from the dropdown</li>
+            <li>Click "Start Listening" and begin speaking</li>
+            <li>Keep speaking continuously to complete your dictation</li>
+            <li>Click "Stop Listening" when you're done</li>
+            <li>The entire text will be inserted at the cursor position</li>
+          </ol>
+        </div>
 
         {/* Error message */}
         {error && (

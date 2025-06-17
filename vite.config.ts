@@ -178,6 +178,15 @@ const buildConfig = ({ mode }: { mode: string }) => {
       },
     ].filter(Boolean),
     build: serverBuildConfig,
+    define: {
+      global: 'globalThis',
+    },
+    resolve: {
+      alias: {
+        // This is to resolve crypto issues
+        crypto: 'crypto-js',
+      },
+    },
   });
 };
 
