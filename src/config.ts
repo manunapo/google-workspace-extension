@@ -45,9 +45,9 @@ export const editPrompts = [
       'Replace the background of this image with a new, more suitable background while keeping the main subject intact.',
   },
   {
-    id: 'enhance-colors',
-    label: 'Enhance Colors',
+    id: '3d-pixar-style',
+    label: '3D Pixar Style',
     prompt:
-      'Enhance and improve the colors in this image. Make them more vibrant, balanced, and visually appealing while maintaining realism.',
+      'Transform this image into a 3D Pixar style image. Make it look like a Pixar movie.',
   },
 ];

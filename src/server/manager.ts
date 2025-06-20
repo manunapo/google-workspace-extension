@@ -43,22 +43,6 @@ export const getUserCredits = withUserIdAuth((userId: string) => {
   };
 });
 
-/**
- * Check if user has enough credits for an operation
- * @param requiredCredits - Number of credits required
- * @returns Boolean indicating if user has enough credits
- */
-export const hasEnoughCredits = withUserIdAuth(
-  (_userId: string, requiredCredits: number): boolean => {
-    const credits = getUserCredits();
-    if (!credits) {
-      return false; // User not found
-    }
-
-    return credits.available_credits >= requiredCredits;
-  }
-);
-
 export const generateImage = withUserIdAuth(
   async (
     userId: string,
@@ -69,9 +53,11 @@ export const generateImage = withUserIdAuth(
   ) => {
     const freeCredits = parseInt(getUserProperties('free_credits') || '0', 10);
     let availableCredits = freeCredits;
+    let usingFreeCredits = true;
     if (freeCredits < 1) {
       const dbCredits = getDbUserCredits(userId);
       availableCredits = dbCredits?.available_credits || 0;
+      usingFreeCredits = false;
     }
 
     if (availableCredits < 1) {
@@ -90,9 +76,19 @@ export const generateImage = withUserIdAuth(
     // Image generation successful - deduct credits
     if (imageUrl) {
       try {
-        const updatedCredits = deductDbUserCredits(userId, 1);
+        if (usingFreeCredits) {
+          setUserProperties('free_credits', (freeCredits - 1).toString());
+        } else {
+          const updatedCredits = deductDbUserCredits(userId, 1);
+          setUserProperties(
+            'free_credits',
+            updatedCredits.available_credits.toString()
+          );
+        }
         console.log(
-          `Credits deducted successfully. Remaining credits: ${updatedCredits.available_credits}`
+          `Credits deducted successfully. Remaining credits: ${
+            availableCredits - 1
+          }`
         );
       } catch (creditError) {
         console.error('Failed to deduct credits:', creditError);

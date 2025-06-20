@@ -64,7 +64,7 @@ const App: React.FC = () => {
   const currentLoadingMessage = useLoadingMessages(
     generationState.isGenerating
   );
-  const { hasEnoughCredits } = useUserCredits(true);
+  const { hasEnoughCredits, refreshCredits } = useUserCredits(true);
   const { showError } = useToast();
 
   // Load last generated image from localStorage on mount
@@ -77,6 +77,10 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Error loading saved image from localStorage:', error);
     }
+  }, []);
+
+  React.useEffect(() => {
+    refreshCredits();
   }, []);
 
   // Save generated image to localStorage whenever a new one is generated
@@ -116,18 +120,24 @@ const App: React.FC = () => {
       });
     }
 
-    await generateImage(
-      prompt,
-      imageData as string | null,
-      transparentBackground,
-      temperature
-    );
+    try {
+      await generateImage(
+        prompt,
+        imageData as string | null,
+        transparentBackground,
+        temperature
+      );
+    } finally {
+      // Always refresh credits after generation attempt to ensure local state is up to date
+      // This handles both successful generations and cases where credits were decremented before an error
+      refreshCredits();
+    }
   };
 
   return (
     <div className="h-screen flex flex-col bg-white">
       <Navigation currentPage={currentPage} onNavigate={handleNavigate} />
-
+      <Toaster position="top-center" />
       <div className="flex-1 overflow-hidden">
         {currentPage === 'home' && (
           <ImageGenerator
@@ -168,8 +178,6 @@ const App: React.FC = () => {
           </Button>
         </div>
       )}
-
-      <Toaster />
     </div>
   );
 };

@@ -41,8 +41,7 @@ const Settings: React.FC = () => {
   }, []);
 
   const handleBuyCredits = () => {
-    // TODO: Implement credit purchase logic
-    console.log('Buy credits clicked');
+    window.open('https://getstyled.art/addon/pricing', '_blank');
   };
 
   const handleRefreshCredits = () => {

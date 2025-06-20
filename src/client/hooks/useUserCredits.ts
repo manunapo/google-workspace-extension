@@ -71,11 +71,15 @@ export const useUserCredits = (shouldStartLoading: boolean = false) => {
     fetchCredits();
   }, [fetchCredits]);
 
+  // Synchronous version that uses already-fetched credits
   const hasEnoughCredits = useCallback(
     (requiredCredits: number = 1): boolean => {
-      return (state.credits?.availableCredits || 0) >= requiredCredits;
+      if (state.loading || state.error || !state.credits) {
+        return false; // Assume no credits if loading, error, or no data
+      }
+      return state.credits.availableCredits >= requiredCredits;
     },
-    [state.credits]
+    [state.loading, state.error, state.credits]
   );
 
   const getCreditsDisplay = useCallback((): string => {

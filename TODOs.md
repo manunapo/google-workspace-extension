@@ -1,2 +1,1 @@
-2. Review pricing page.
-3. Record Tutorial Video
+1. Record Tutorial Video
