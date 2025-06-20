@@ -45,6 +45,24 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
   const [showEdit, setShowEdit] = React.useState(false);
   const [showReferenceImage, setShowReferenceImage] = React.useState(false);
 
+  // Ref for the scrollable container
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when image is generated
+  React.useEffect(() => {
+    if (generationState.generatedImage && scrollContainerRef.current) {
+      // Small delay to ensure the image is rendered
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTo({
+            top: scrollContainerRef.current.scrollHeight,
+            behavior: 'smooth',
+          });
+        }
+      }, 100);
+    }
+  }, [generationState.generatedImage]);
+
   const handlePromptSelect = (selectedPrompt: string) => {
     setPrompt(selectedPrompt);
   };
@@ -78,7 +96,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      <div className="flex-1 overflow-y-auto p-1">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-1">
         {/* Tutorial Section */}
         <TutorialBanner />
 
