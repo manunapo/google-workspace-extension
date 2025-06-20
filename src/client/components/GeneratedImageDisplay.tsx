@@ -46,9 +46,7 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
   };
 
   return (
-    <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden ${className}`}
-    >
+    <div className={`bg-white overflow-hidden ${className}`}>
       {/* Image Display */}
       <div className="p-4">
         <div className="relative group">

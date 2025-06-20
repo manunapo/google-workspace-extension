@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 
+import { OPENAI_API_KEY } from '../../constants';
+
 export interface ImageGenerationOptions {
   prompt: string;
   transparentBackground?: boolean;
@@ -8,7 +10,7 @@ export interface ImageGenerationOptions {
 }
 
 // Image generation function with OpenAI integration using UrlFetchApp
-export async function generateImage(
+export async function generateOpenAIImage(
   prompt: string,
   referenceImage?: string | null,
   transparentBackground = false,
@@ -26,7 +28,7 @@ export async function generateImage(
 
     // Check if API key is configured
     const apiKey =
-      PropertiesService.getScriptProperties().getProperty('OPENAI_API_KEY');
+      PropertiesService.getScriptProperties().getProperty(OPENAI_API_KEY);
     if (!apiKey) {
       throw new Error(
         'OpenAI API key not configured. Please add OPENAI_API_KEY to script properties.'
@@ -52,7 +54,7 @@ export async function generateImage(
       );
 
       // Prepare form data for edits endpoint
-      const formData: any = {
+      const formData: Record<string, unknown> = {
         model: 'gpt-image-1',
         prompt,
         image: imageBlob,
@@ -77,7 +79,7 @@ export async function generateImage(
       // Use generate endpoint for new images
       endpoint = 'https://api.openai.com/v1/images/generations';
 
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         model: 'gpt-image-1',
         prompt,
         size: '1024x1024',
@@ -161,4 +163,4 @@ export async function generateImage(
   }
 }
 
-export default generateImage;
+export default generateOpenAIImage;

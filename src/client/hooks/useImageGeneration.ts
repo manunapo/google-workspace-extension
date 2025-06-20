@@ -54,16 +54,9 @@ export const useImageGeneration = () => {
         generatedImage: result,
       }));
 
-      // Automatically insert the image into the document
-      try {
-        await serverFunctions.insertImageToDoc(result);
-        showSuccess('Image generated and inserted into document!');
-      } catch (insertError) {
-        console.warn('Failed to auto-insert image:', insertError);
-        showSuccess(
-          'Image generated successfully! Use the Insert button to add it to your document.'
-        );
-      }
+      showSuccess(
+        'Image generated successfully! Use the Insert button to add it to your document.'
+      );
     } catch (error) {
       const errorMessage =
         error instanceof Error

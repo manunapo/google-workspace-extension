@@ -1,14 +1,7 @@
-import EXTENSION_NAME from '../types/constants';
+import { EXTENSION_NAME } from '../constants';
 
 export const openAboutUsDialog = () => {
   const html = HtmlService.createHtmlOutputFromFile('about')
-    .setWidth(600)
-    .setHeight(350);
-  DocumentApp.getUi().showModalDialog(html, EXTENSION_NAME);
-};
-
-export const openHelpDialog = () => {
-  const html = HtmlService.createHtmlOutputFromFile('quickstart')
     .setWidth(600)
     .setHeight(350);
   DocumentApp.getUi().showModalDialog(html, EXTENSION_NAME);
@@ -18,6 +11,13 @@ export const openSidebar = () => {
   const html =
     HtmlService.createHtmlOutputFromFile('sidebar').setTitle(EXTENSION_NAME);
   DocumentApp.getUi().showSidebar(html);
+};
+
+export const openTutorialDialog = () => {
+  const html = HtmlService.createHtmlOutputFromFile('tutorial')
+    .setWidth(800)
+    .setHeight(600);
+  DocumentApp.getUi().showModalDialog(html, EXTENSION_NAME);
 };
 
 export const onOpen = (e: {
@@ -37,7 +37,7 @@ export const onOpen = (e: {
     .createAddonMenu()
     .addItem('Launch', 'openSidebar')
     .addSeparator()
-    .addItem('Quickstart', 'openHelpDialog')
+    .addItem('Tutorial', 'openTutorialDialog')
     .addItem('About Us', 'openAboutUsDialog')
     .addToUi();
 };

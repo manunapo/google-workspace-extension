@@ -13,6 +13,7 @@ You understand Google apps scripts limitations.
 - Write clean, reusable code. DRY.
 - Be wise about the space usage in the sidebar.
 - Focus on clean, user friendly UI.
+- All API calls from server side MUST be used UrlFetchApp (https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app).
 
 IMPORTANT: do not create READMES unless explicitly required.
 

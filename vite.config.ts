@@ -28,9 +28,9 @@ const clientEntrypoints = [
     template: 'about/index.html',
   },
   {
-    name: 'CLIENT - quickstart',
-    filename: 'quickstart',
-    template: 'quickstart/index.html',
+    name: 'CLIENT - tutorial',
+    filename: 'tutorial',
+    template: 'tutorial/index.html',
   },
 ];
 

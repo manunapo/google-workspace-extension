@@ -1,3 +1,2 @@
-1. Change logo
-2. Add credits integration
-3. Implement Contact and help
+2. Review pricing page.
+3. Record Tutorial Video
