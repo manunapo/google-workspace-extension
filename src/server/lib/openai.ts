@@ -58,8 +58,8 @@ export async function generateOpenAIImage(
         model: 'gpt-image-1',
         prompt,
         image: imageBlob,
-        size: '1024x1024',
-        quality: 'auto',
+        size: 'auto',
+        quality: 'high',
         output_format: transparentBackground ? 'png' : 'jpeg',
       };
 
@@ -82,8 +82,8 @@ export async function generateOpenAIImage(
       const payload: Record<string, unknown> = {
         model: 'gpt-image-1',
         prompt,
-        size: '1024x1024',
-        quality: 'auto',
+        size: 'auto',
+        quality: 'medium',
         output_format: transparentBackground ? 'png' : 'jpeg',
       };
 
