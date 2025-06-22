@@ -1,15 +1,15 @@
 export const createPrompts = [
   {
-    id: 'portrait',
-    label: 'Portrait Photo',
+    id: 'flowchart-customer-onboarding',
+    label: 'Onboarding Flowchart',
     prompt:
-      'Create a professional portrait photo of a person with natural lighting, sharp focus, and a clean background. High quality, photorealistic style.',
+      'Clean process flowchart of a customer onboarding journey, 5 steps, minimal design.',
   },
   {
-    id: 'landscape',
-    label: 'Landscape Scene',
+    id: 'process-flow',
+    label: 'Process Flow',
     prompt:
-      'Create a breathtaking landscape scene with mountains, rivers, and dramatic sky. Use vibrant colors and cinematic composition.',
+      'Create a process flow diagram that illustrates the key stages involved in baking bread. Use colors and clear labels and a logical left-to-right or top-down flow. Include high-level steps only: mixing, kneading, proofing, baking, and use a minimal, business-style visual aesthetic. Dont put a title to the graphic.',
   },
   {
     id: '3d-render',

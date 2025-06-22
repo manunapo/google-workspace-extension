@@ -15,8 +15,8 @@ export const openSidebar = () => {
 
 export const openTutorialDialog = () => {
   const html = HtmlService.createHtmlOutputFromFile('tutorial')
-    .setWidth(800)
-    .setHeight(600);
+    .setWidth(1280)
+    .setHeight(720);
   DocumentApp.getUi().showModalDialog(html, EXTENSION_NAME);
 };
 

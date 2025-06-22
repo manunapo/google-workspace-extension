@@ -30,16 +30,15 @@ interface SupabaseConfig {
   apiKey: string;
 }
 
-const supabaseConfig: SupabaseConfig = {
-  url: 'https://rjogoexdzfuwqzxdccic.supabase.co/rest/v1',
-  apiKey: getScriptProperties('SUPABASE_API_KEY'),
-};
-
 /**
  * Get Supabase configuration or throw error if not initialized
  */
 function getConfig(): SupabaseConfig {
-  if (!supabaseConfig || !supabaseConfig.apiKey) {
+  const supabaseConfig: SupabaseConfig = {
+    url: 'https://rjogoexdzfuwqzxdccic.supabase.co/rest/v1',
+    apiKey: getScriptProperties('SUPABASE_API_KEY') || '',
+  };
+  if (!supabaseConfig.apiKey) {
     throw new Error(
       'Supabase not properly configured. Check SUPABASE_API_KEY.'
     );

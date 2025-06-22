@@ -30,7 +30,7 @@ export const getUserCredits = withUserIdAuth((userId: string) => {
     );
     setUserProperties('free_credits', '2');
   }
-  const freeCredits = parseInt(getUserProperties('free_credits'), 10);
+  const freeCredits = parseInt(getUserProperties('free_credits') || '0', 10);
   if (freeCredits > 0) {
     console.log(
       `User ${userId} has ${freeCredits} free credits from properties`
@@ -79,11 +79,7 @@ export const generateImage = withUserIdAuth(
         if (usingFreeCredits) {
           setUserProperties('free_credits', (freeCredits - 1).toString());
         } else {
-          const updatedCredits = deductDbUserCredits(userId, 1);
-          setUserProperties(
-            'free_credits',
-            updatedCredits.available_credits.toString()
-          );
+          deductDbUserCredits(userId, 1);
         }
         console.log(
           `Credits deducted successfully. Remaining credits: ${
