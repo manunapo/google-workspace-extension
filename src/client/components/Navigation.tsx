@@ -22,7 +22,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate }) => {
           <div className="flex items-center gap-2">
             <div className="flex justify-start align-middle gap-2">
               <img
-                src="https://getstyled.art/icons/logo-addon_32.webp"
+                src="https://getstyled.art/icons/logo_120.webp"
                 alt="Logo"
                 className="w-8 h-8"
               />
