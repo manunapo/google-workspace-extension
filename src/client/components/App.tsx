@@ -1,10 +1,13 @@
 import * as React from 'react';
-import { Sparkles } from 'lucide-react';
+import { Edit3, Sparkles } from 'lucide-react';
 import Navigation from './Navigation';
 import ImageGenerator from './ImageGenerator';
+import ImageEditor from './ImageEditor';
+import ImageEditorAI from './ImageEditorAI';
 import Settings from './Settings';
 import { Toaster } from './ui/sonner';
 import { Button } from './ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import Spinner from './ui/spinner';
 import { useImageGeneration } from '../hooks/useImageGeneration';
 import { useUserCredits } from '../hooks/useUserCredits';
@@ -140,18 +143,68 @@ const App: React.FC = () => {
       <Toaster position="top-center" />
       <div className="flex-1 overflow-hidden">
         {currentPage === 'home' && (
-          <ImageGenerator
-            selectedImage={selectedImage}
-            setSelectedImage={setSelectedImage}
-            prompt={prompt}
-            setPrompt={setPrompt}
-            transparentBackground={transparentBackground}
-            setTransparentBackground={setTransparentBackground}
-            temperature={temperature}
-            setTemperature={setTemperature}
-            generationState={generationState}
-            lastGeneratedImage={lastGeneratedImage}
-          />
+          <Tabs defaultValue="generate" className="h-full flex flex-col">
+            <div className="flex justify-center">
+              <TabsList>
+                <TabsTrigger value="generate">
+                  <Sparkles className="w-4 h-4" />
+                  Generate AI
+                </TabsTrigger>
+                <TabsTrigger value="edit-ai">
+                  <Sparkles className="w-4 h-4" />
+                  Edit AI
+                </TabsTrigger>
+                <TabsTrigger value="edit">
+                  <Edit3 className="w-4 h-4" />
+                  Edit
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <TabsContent value="generate" className="h-full overflow-auto">
+                <ImageGenerator
+                  selectedImage={selectedImage}
+                  setSelectedImage={setSelectedImage}
+                  prompt={prompt}
+                  setPrompt={setPrompt}
+                  transparentBackground={transparentBackground}
+                  setTransparentBackground={setTransparentBackground}
+                  temperature={temperature}
+                  setTemperature={setTemperature}
+                  generationState={generationState}
+                  lastGeneratedImage={lastGeneratedImage}
+                />
+              </TabsContent>
+              <TabsContent value="edit-ai" className="h-full overflow-auto">
+                <ImageEditorAI
+                  selectedImage={selectedImage}
+                  setSelectedImage={setSelectedImage}
+                  prompt={prompt}
+                  setPrompt={setPrompt}
+                  transparentBackground={transparentBackground}
+                  setTransparentBackground={setTransparentBackground}
+                  temperature={temperature}
+                  setTemperature={setTemperature}
+                  generationState={generationState}
+                  lastGeneratedImage={lastGeneratedImage}
+                />
+              </TabsContent>
+              <TabsContent value="edit" className="h-full overflow-auto">
+                <ImageEditor
+                  selectedImage={selectedImage}
+                  setSelectedImage={setSelectedImage}
+                  prompt={prompt}
+                  setPrompt={setPrompt}
+                  transparentBackground={transparentBackground}
+                  setTransparentBackground={setTransparentBackground}
+                  temperature={temperature}
+                  setTemperature={setTemperature}
+                  generationState={generationState}
+                  lastGeneratedImage={lastGeneratedImage}
+                />
+              </TabsContent>
+            </div>
+          </Tabs>
         )}
         {currentPage === 'settings' && <Settings />}
       </div>

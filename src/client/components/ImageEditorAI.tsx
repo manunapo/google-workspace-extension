@@ -1,12 +1,13 @@
 import * as React from 'react';
-import { Zap, Sparkles } from 'lucide-react';
+import 'react-image-crop/dist/ReactCrop.css';
+import { Upload, Edit3, Sparkles } from 'lucide-react';
 import Textarea from './ui/textarea';
 import GeneratedImageDisplay from './GeneratedImageDisplay';
 import TutorialBanner from './TutorialBanner';
 import { GenerationState } from '../hooks/useImageGeneration';
-import { createPrompts } from '../../config';
+import { editPrompts } from '../../config';
 
-interface ImageGeneratorProps {
+interface ImageEditorAIProps {
   selectedImage: File | null;
   setSelectedImage: React.Dispatch<React.SetStateAction<File | null>>;
   prompt: string;
@@ -19,7 +20,9 @@ interface ImageGeneratorProps {
   lastGeneratedImage: string | null;
 }
 
-const ImageGenerator: React.FC<ImageGeneratorProps> = ({
+const ImageEditorAI: React.FC<ImageEditorAIProps> = ({
+  selectedImage,
+  setSelectedImage,
   prompt,
   setPrompt,
   transparentBackground,
@@ -51,36 +54,95 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
     setPrompt(selectedPrompt);
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50">
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-1">
         {/* Tutorial Section */}
         <TutorialBanner />
 
-        {/* Quick Start Section */}
-        <div className="bg-white rounded-xl px-4 shadow-sm border border-gray-100">
+        {/* Reference Image Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="px-4 border-t border-gray-100">
+            <div>
+              {selectedImage ? (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-700">
+                      Current Image
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setSelectedImage(null);
+                      }}
+                      className="text-xs text-gray-500 hover:text-red-500"
+                      disabled={generationState.isGenerating}
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  <div className="flex items-center px-2 gap-3 bg-gray-50 rounded-lg italic">
+                    <Upload className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600 truncate">
+                      {selectedImage.name}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <label
+                  className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg transition-colors ${
+                    generationState.isGenerating
+                      ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
+                      : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer'
+                  }`}
+                >
+                  <Upload className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-600">Upload image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={generationState.isGenerating}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Edit with AI Section */}
+        <div className="bg-white rounded-xl p-4 pb-0 shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-4">
-            <Zap className="w-4 h-4 text-orange-500" />
+            <Sparkles className="w-4 h-4 text-orange-500" />
             <h2 className="text-sm font-medium text-gray-800">Quick Start</h2>
           </div>
 
-          {/* Create Subsection */}
-          <div className="space-y-2 mt-2">
-            {createPrompts.map((quickPrompt) => (
-              <button
-                key={quickPrompt.id}
-                onClick={() => handlePromptSelect(quickPrompt.prompt)}
-                className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-blue-50 hover:border-blue-200 border border-gray-200 rounded-lg transition-all duration-200 text-left group h-12"
-                disabled={generationState.isGenerating}
-              >
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-3 h-3 text-blue-600" />
-                </div>
-                <span className="text-xs font-medium text-gray-700 group-hover:text-blue-700">
-                  {quickPrompt.label}
-                </span>
-              </button>
-            ))}
+          <div>
+            <div className="space-y-2 mt-2">
+              {editPrompts.map((quickPrompt) => (
+                <button
+                  key={quickPrompt.id}
+                  onClick={() => handlePromptSelect(quickPrompt.prompt)}
+                  className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-purple-50 hover:border-purple-200 border border-gray-200 rounded-lg transition-all duration-200 text-left group h-12"
+                  disabled={generationState.isGenerating}
+                >
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Edit3 className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 group-hover:text-purple-700">
+                    {quickPrompt.label}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -152,4 +214,4 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
   );
 };
 
-export default ImageGenerator;
+export default ImageEditorAI;
