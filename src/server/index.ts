@@ -1,17 +1,22 @@
-import { onOpen, openSidebar, openHelpDialog, openAboutUsDialog } from './ui';
-
-import { getSheetsData, addSheet, deleteSheet, setActiveSheet } from './sheets';
-import { insertTextToDoc } from './document';
+import { generateImage, getUserCredits } from './manager';
+import getUserEmail from './session';
+import {
+  onOpen,
+  openSidebar,
+  openAboutUsDialog,
+  openTutorialDialog,
+} from './ui';
+import { insertTextToDoc, insertImageToDoc } from './document';
 
 // Public functions must be exported as named exports
 export {
   onOpen,
   openSidebar,
-  openHelpDialog,
   openAboutUsDialog,
-  getSheetsData,
-  addSheet,
-  deleteSheet,
-  setActiveSheet,
+  generateImage,
+  getUserEmail,
   insertTextToDoc,
+  insertImageToDoc,
+  getUserCredits,
+  openTutorialDialog,
 };

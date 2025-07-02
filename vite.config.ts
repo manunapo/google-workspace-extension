@@ -1,11 +1,13 @@
 /* eslint-disable import/no-extraneous-dependencies */
+import react from '@vitejs/plugin-react-swc';
+import { existsSync, readFileSync } from 'fs';
+import { writeFile } from 'fs/promises';
+import { generate } from 'gas-entry-generator';
 import { resolve } from 'path';
 import { BuildOptions, ServerOptions, build, defineConfig } from 'vite';
-import { existsSync, readFileSync } from 'fs';
-import react from '@vitejs/plugin-react-swc';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { viteSingleFile } from 'vite-plugin-singlefile';
-import { writeFile } from 'fs/promises';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
+import generateBuildHash from './scripts/generate-build-hash.mjs';
 
 const PORT = 3000;
 const clientRoot = './src/client';
@@ -16,9 +18,19 @@ const devServerWrapper = './dev/dev-server-wrapper.html';
 
 const clientEntrypoints = [
   {
-    name: 'CLIENT - Sidebar',
+    name: 'CLIENT - sidebar',
     filename: 'sidebar',
     template: 'sidebar/index.html',
+  },
+  {
+    name: 'CLIENT - about',
+    filename: 'about',
+    template: 'about/index.html',
+  },
+  {
+    name: 'CLIENT - tutorial',
+    filename: 'tutorial',
+    template: 'tutorial/index.html',
   },
 ];
 
@@ -116,15 +128,44 @@ const serverBuildConfig: BuildOptions = {
     output: {
       entryFileNames: 'code.js',
       extend: true,
-      footer: (chunk) =>
-        chunk.exports
-          .map((exportedFunction) => `function ${exportedFunction}() {};`)
-          .join('\n'),
+      footer: (chunk) => {
+        const fullCode = chunk.moduleIds
+          .map((moduleId) => chunk.modules[moduleId].code)
+          .join('\n');
+
+        const options = {
+          comment: true,
+          autoGlobalExports: true,
+        };
+        const output = generate(fullCode, options);
+        const entryPointFunctionSnippet = output.entryPointFunctions;
+        const globalAssignedFunctionNames = new Set<string>([]);
+
+        const functionNameRegex = /function (\w+)/g;
+        let match = functionNameRegex.exec(entryPointFunctionSnippet);
+        while (match !== null) {
+          globalAssignedFunctionNames.add(match[1]);
+          match = functionNameRegex.exec(entryPointFunctionSnippet);
+        }
+        return (
+          chunk.exports
+            .filter(
+              (exportedFunction) =>
+                !globalAssignedFunctionNames.has(exportedFunction)
+            )
+            .map((exportedFunction) => `function ${exportedFunction}() {};`)
+            .join('\n') + output.entryPointFunctions
+        );
+      },
     },
   },
 };
 
 const buildConfig = ({ mode }: { mode: string }) => {
+  // ONLY generate build hash during actual build (not dev server)
+  const buildInfo = generateBuildHash();
+  console.log(`🔨 Build Hash (DEPLOYED): ${buildInfo.fullHash}`);
+
   const targets = [{ src: copyAppscriptEntry, dest: './' }];
   if (mode === 'development') {
     targets.push(
@@ -141,6 +182,11 @@ const buildConfig = ({ mode }: { mode: string }) => {
     );
   }
   return defineConfig({
+    define: {
+      // Inject build hash into the code
+      __BUILD_HASH__: JSON.stringify(buildInfo.fullHash),
+      __BUILD_INFO__: JSON.stringify(buildInfo),
+    },
     plugins: [
       viteStaticCopy({
         targets,
@@ -178,15 +224,6 @@ const buildConfig = ({ mode }: { mode: string }) => {
       },
     ].filter(Boolean),
     build: serverBuildConfig,
-    define: {
-      global: 'globalThis',
-    },
-    resolve: {
-      alias: {
-        // This is to resolve crypto issues
-        crypto: 'crypto-js',
-      },
-    },
   });
 };
 
