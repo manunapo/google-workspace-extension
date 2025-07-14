@@ -9,6 +9,11 @@ export interface ImageEditionSettings {
   quality: number;
 }
 
+export interface OriginalImageDimensions {
+  width: number;
+  height: number;
+}
+
 export interface CropSettings {
   x: number;
   y: number;
@@ -34,6 +39,9 @@ export interface UseImageEditionReturn {
   // Export
   exportImage: (originalImage: File) => Promise<Blob>;
 
+  // Initialize with image
+  initializeWithImage: (originalImage: File) => Promise<void>;
+
   // Reset
   resetSettings: () => void;
 }
@@ -53,6 +61,7 @@ export const useImageEdition = (): UseImageEditionReturn => {
   const [cropSettings, setCropSettings] = useState<CropSettings | null>(null);
   const [isCropping, setIsCropping] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [originalDimensions, setOriginalDimensions] = useState<OriginalImageDimensions | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const updateSettings = useCallback(
@@ -60,22 +69,21 @@ export const useImageEdition = (): UseImageEditionReturn => {
       setSettings((prev) => {
         const newSettings = { ...prev, ...updates };
 
-        if (updates.width && prev.maintainAspectRatio && prev.width > 0) {
-          const ratio = prev.height / prev.width;
-          newSettings.height = Math.round(updates.width * ratio);
-        } else if (
-          updates.height &&
-          prev.maintainAspectRatio &&
-          prev.height > 0
-        ) {
-          const ratio = prev.width / prev.height;
-          newSettings.width = Math.round(updates.height * ratio);
+        // Use original image aspect ratio if available and maintainAspectRatio is true
+        if (prev.maintainAspectRatio && originalDimensions) {
+          const originalRatio = originalDimensions.height / originalDimensions.width;
+
+          if (updates.width && originalDimensions.width > 0) {
+            newSettings.height = Math.round(updates.width * originalRatio);
+          } else if (updates.height && originalDimensions.height > 0) {
+            newSettings.width = Math.round(updates.height / originalRatio);
+          }
         }
 
         return newSettings;
       });
     },
-    []
+    [originalDimensions]
   );
 
   const loadImage = useCallback((file: File): Promise<HTMLImageElement> => {
@@ -188,11 +196,27 @@ export const useImageEdition = (): UseImageEditionReturn => {
     [applyEdits, loadImage, settings.format, settings.quality]
   );
 
+  const initializeWithImage = useCallback(
+    async (originalImage: File) => {
+      const img = await loadImage(originalImage);
+
+      // Update settings with actual image dimensions
+      setSettings((prev) => ({
+        ...prev,
+        width: img.width,
+        height: img.height,
+      }));
+      setOriginalDimensions({ width: img.width, height: img.height });
+    },
+    [loadImage]
+  );
+
   const resetSettings = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
     setCropSettings(null);
     setIsCropping(false);
     setPreviewUrl(null);
+    setOriginalDimensions(null);
   }, []);
 
   return {
@@ -205,6 +229,7 @@ export const useImageEdition = (): UseImageEditionReturn => {
     previewUrl,
     generatePreview,
     exportImage,
+    initializeWithImage,
     resetSettings,
   };
 };

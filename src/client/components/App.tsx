@@ -7,7 +7,6 @@ import ImageEditorAI from './ImageEditorAI';
 import Settings from './Settings';
 import { Toaster } from './ui/sonner';
 import { Button } from './ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import Spinner from './ui/spinner';
 import { useImageGeneration } from '../hooks/useImageGeneration';
 import { useUserCredits } from '../hooks/useUserCredits';
@@ -15,44 +14,34 @@ import { useToast } from '../hooks/useToast';
 
 type Page = 'home' | 'settings';
 
-// Messages for the loader - each displays for 5 seconds
-const loadingMessages = [
-  'Mixing colors...',
-  'Adding magic...',
-  'Dreaming pixels...',
-  'Creating art...',
-  'Crafting image...',
-  'Almost done...',
-];
-
-// Custom hook for message rotation
 const useLoadingMessages = (isGenerating: boolean) => {
-  const [currentMessageIndex, setCurrentMessageIndex] = React.useState(0);
+  const [messageIndex, setMessageIndex] = React.useState(0);
+  const messages = [
+    'Generating image...',
+    'Almost done...',
+    'Finalizing your image...',
+  ];
 
   React.useEffect(() => {
     if (!isGenerating) {
-      setCurrentMessageIndex(0);
+      setMessageIndex(0);
       return undefined;
     }
 
     const interval = setInterval(() => {
-      setCurrentMessageIndex((prevIndex) => {
-        const nextIndex = prevIndex + 1;
-        // Stay on the last message once we reach it
-        return nextIndex >= loadingMessages.length - 1
-          ? loadingMessages.length - 1
-          : nextIndex;
-      });
-    }, 5000); // Change message every 5 seconds
+      setMessageIndex((prev) => (prev + 1) % messages.length);
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, [isGenerating]);
+  }, [isGenerating, messages.length]);
 
-  return loadingMessages[currentMessageIndex];
+  return messages[messageIndex];
 };
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = React.useState<Page>('home');
+  const [currentTab, setCurrentTab] = React.useState('generate');
+
   // Shared generation state and form data
   const [selectedImage, setSelectedImage] = React.useState<File | null>(null);
   const [prompt, setPrompt] = React.useState('');
@@ -137,80 +126,111 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTabChange = (value: string) => {
+    setCurrentTab(value);
+  };
+
   return (
     <div className="h-screen flex flex-col bg-white">
       <Navigation currentPage={currentPage} onNavigate={handleNavigate} />
       <Toaster position="top-center" />
       <div className="flex-1 overflow-hidden">
         {currentPage === 'home' && (
-          <Tabs defaultValue="generate" className="h-full flex flex-col">
+          <div className="h-full flex flex-col">
             <div className="flex justify-center">
-              <TabsList>
-                <TabsTrigger value="generate">
+              <div className="flex border-b border-gray-200 mb-2">
+                <button
+                  onClick={() => handleTabChange('generate')}
+                  className={`flex items-center px-2 py-2 text-nowrap overflow-hidden gap-2 text-sm font-medium transition-colors border-b-2 ${
+                    currentTab === 'generate'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
                   <Sparkles className="w-4 h-4" />
                   Generate AI
-                </TabsTrigger>
-                <TabsTrigger value="edit-ai">
+                </button>
+                <button
+                  onClick={() => handleTabChange('edit-ai')}
+                  className={`flex items-center px-2 py-2 text-nowrap overflow-hidden gap-2 text-sm font-medium transition-colors border-b-2 ${
+                    currentTab === 'edit-ai'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
                   <Sparkles className="w-4 h-4" />
                   Edit AI
-                </TabsTrigger>
-                <TabsTrigger value="edit">
+                </button>
+                <button
+                  onClick={() => handleTabChange('edit')}
+                  className={`flex items-center px-2 py-2 text-nowrap overflow-hidden gap-2 text-sm font-medium transition-colors border-b-2 ${
+                    currentTab === 'edit'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
                   <Edit3 className="w-4 h-4" />
                   Edit
-                </TabsTrigger>
-              </TabsList>
+                </button>
+              </div>
             </div>
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="generate" className="h-full overflow-auto">
-                <ImageGenerator
-                  selectedImage={selectedImage}
-                  setSelectedImage={setSelectedImage}
-                  prompt={prompt}
-                  setPrompt={setPrompt}
-                  transparentBackground={transparentBackground}
-                  setTransparentBackground={setTransparentBackground}
-                  temperature={temperature}
-                  setTemperature={setTemperature}
-                  generationState={generationState}
-                  lastGeneratedImage={lastGeneratedImage}
-                />
-              </TabsContent>
-              <TabsContent value="edit-ai" className="h-full overflow-auto">
-                <ImageEditorAI
-                  selectedImage={selectedImage}
-                  setSelectedImage={setSelectedImage}
-                  prompt={prompt}
-                  setPrompt={setPrompt}
-                  transparentBackground={transparentBackground}
-                  setTransparentBackground={setTransparentBackground}
-                  temperature={temperature}
-                  setTemperature={setTemperature}
-                  generationState={generationState}
-                  lastGeneratedImage={lastGeneratedImage}
-                />
-              </TabsContent>
-              <TabsContent value="edit" className="h-full overflow-auto">
-                <ImageEditor
-                  selectedImage={selectedImage}
-                  setSelectedImage={setSelectedImage}
-                  prompt={prompt}
-                  setPrompt={setPrompt}
-                  transparentBackground={transparentBackground}
-                  setTransparentBackground={setTransparentBackground}
-                  temperature={temperature}
-                  setTemperature={setTemperature}
-                  generationState={generationState}
-                  lastGeneratedImage={lastGeneratedImage}
-                />
-              </TabsContent>
+            <div className="flex-1 overflow-hidden bg-white">
+              {currentTab === 'generate' && (
+                <div className="h-full overflow-auto">
+                  <ImageGenerator
+                    selectedImage={selectedImage}
+                    setSelectedImage={setSelectedImage}
+                    prompt={prompt}
+                    setPrompt={setPrompt}
+                    transparentBackground={transparentBackground}
+                    setTransparentBackground={setTransparentBackground}
+                    temperature={temperature}
+                    setTemperature={setTemperature}
+                    generationState={generationState}
+                    lastGeneratedImage={lastGeneratedImage}
+                  />
+                </div>
+              )}
+              {currentTab === 'edit-ai' && (
+                <div className="h-full overflow-auto">
+                  <ImageEditorAI
+                    selectedImage={selectedImage}
+                    setSelectedImage={setSelectedImage}
+                    prompt={prompt}
+                    setPrompt={setPrompt}
+                    transparentBackground={transparentBackground}
+                    setTransparentBackground={setTransparentBackground}
+                    temperature={temperature}
+                    setTemperature={setTemperature}
+                    generationState={generationState}
+                    lastGeneratedImage={lastGeneratedImage}
+                  />
+                </div>
+              )}
+              {currentTab === 'edit' && (
+                <div className="h-full overflow-auto">
+                  <ImageEditor
+                    selectedImage={selectedImage}
+                    setSelectedImage={setSelectedImage}
+                    prompt={prompt}
+                    setPrompt={setPrompt}
+                    transparentBackground={transparentBackground}
+                    setTransparentBackground={setTransparentBackground}
+                    temperature={temperature}
+                    setTemperature={setTemperature}
+                    generationState={generationState}
+                    lastGeneratedImage={lastGeneratedImage}
+                  />
+                </div>
+              )}
             </div>
-          </Tabs>
+          </div>
         )}
         {currentPage === 'settings' && <Settings />}
       </div>
 
-      {/* Persistent Generate Button - Only shown on home page */}
-      {currentPage === 'home' && (
+      {/* Persistent Generate Button - Only shown on home page and not in edit tab */}
+      {currentPage === 'home' && currentTab !== 'edit' && (
         <div className="p-4 bg-white border-t border-gray-200">
           <Button
             onClick={handleGenerate}
@@ -225,7 +245,9 @@ const App: React.FC = () => {
             ) : (
               <div className="flex items-center gap-2 text-white">
                 <Sparkles className="w-5 h-5" />
-                <span>Generate Image</span>
+                <span>
+                  {currentTab === 'edit-ai' ? 'Edit Image' : 'Generate Image'}
+                </span>
               </div>
             )}
           </Button>

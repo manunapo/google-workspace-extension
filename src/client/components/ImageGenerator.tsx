@@ -53,12 +53,12 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-1">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         {/* Tutorial Section */}
         <TutorialBanner />
 
         {/* Quick Start Section */}
-        <div className="bg-white rounded-xl px-4 shadow-sm border border-gray-100">
+        <div className="bg-white px-4">
           <div className="flex items-center gap-2 mb-4">
             <Zap className="w-4 h-4 text-orange-500" />
             <h2 className="text-sm font-medium text-gray-800">Quick Start</h2>
@@ -85,7 +85,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
         </div>
 
         {/* Main Prompt Section */}
-        <div className="bg-white rounded-xl p-4 pb-0 shadow-sm border border-gray-100">
+        <div className="bg-white p-4 pb-0">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
             <h2 className="text-sm font-medium text-gray-800">

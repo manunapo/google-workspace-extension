@@ -6,6 +6,7 @@ import GeneratedImageDisplay from './GeneratedImageDisplay';
 import TutorialBanner from './TutorialBanner';
 import { GenerationState } from '../hooks/useImageGeneration';
 import { editPrompts } from '../../config';
+import { useToast } from '../hooks/useToast';
 
 interface ImageEditorAIProps {
   selectedImage: File | null;
@@ -19,6 +20,20 @@ interface ImageEditorAIProps {
   generationState: GenerationState;
   lastGeneratedImage: string | null;
 }
+
+// Utility function to convert base64 to File
+const base64ToFile = (base64: string, filename: string): File => {
+  const arr = base64.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n > 0) {
+    n -= 1;
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+};
 
 const ImageEditorAI: React.FC<ImageEditorAIProps> = ({
   selectedImage,
@@ -34,6 +49,45 @@ const ImageEditorAI: React.FC<ImageEditorAIProps> = ({
 }) => {
   // Ref for the scrollable container
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  // Create preview URL for uploaded image
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+
+  const { showError } = useToast();
+
+  // Handle adding generated image to editor
+  const handleAddGeneratedImage = () => {
+    const availableImage = generationState.generatedImage || lastGeneratedImage;
+
+    if (availableImage) {
+      try {
+        // Convert base64 to File object
+        const timestamp = Date.now();
+        const file = base64ToFile(
+          availableImage,
+          `generated-image-${timestamp}.png`
+        );
+        setSelectedImage(file);
+      } catch (error) {
+        showError('Failed to load generated image');
+      }
+    }
+  };
+
+  // Generate preview URL when image changes
+  React.useEffect(() => {
+    if (selectedImage) {
+      const url = URL.createObjectURL(selectedImage);
+      setPreviewUrl(url);
+
+      // Cleanup previous URL
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    }
+    setPreviewUrl(null);
+    return undefined;
+  }, [selectedImage]);
 
   // Auto-scroll to bottom when image is generated
   React.useEffect(() => {
@@ -63,19 +117,19 @@ const ImageEditorAI: React.FC<ImageEditorAIProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-1">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         {/* Tutorial Section */}
         <TutorialBanner />
 
         {/* Reference Image Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="px-4 border-t border-gray-100">
+        <div className="bg-white ">
+          <div className="px-4">
             <div>
               {selectedImage ? (
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-gray-700">
-                      Current Image
+                      Image to edit
                     </h3>
                     <button
                       onClick={() => {
@@ -88,6 +142,21 @@ const ImageEditorAI: React.FC<ImageEditorAIProps> = ({
                     </button>
                   </div>
 
+                  {/* Show preview if available */}
+                  {previewUrl && (
+                    <div className="mb-3">
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-full h-auto rounded-lg border border-gray-200"
+                        style={{
+                          maxHeight: '200px',
+                          objectFit: 'contain',
+                        }}
+                      />
+                    </div>
+                  )}
+
                   <div className="flex items-center px-2 gap-3 bg-gray-50 rounded-lg italic">
                     <Upload className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-600 truncate">
@@ -96,30 +165,44 @@ const ImageEditorAI: React.FC<ImageEditorAIProps> = ({
                   </div>
                 </div>
               ) : (
-                <label
-                  className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg transition-colors ${
-                    generationState.isGenerating
-                      ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
-                      : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer'
-                  }`}
-                >
-                  <Upload className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm text-gray-600">Upload image</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    disabled={generationState.isGenerating}
-                  />
-                </label>
+                <div className="space-y-3">
+                  <label
+                    className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg transition-colors ${
+                      generationState.isGenerating
+                        ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
+                        : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer'
+                    }`}
+                  >
+                    <Upload className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-600">Upload image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={generationState.isGenerating}
+                    />
+                  </label>
+
+                  {(generationState.generatedImage || lastGeneratedImage) && (
+                    <div className="flex justify-center">
+                      <button
+                        onClick={handleAddGeneratedImage}
+                        className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                        disabled={generationState.isGenerating}
+                      >
+                        Add generated image
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
         </div>
 
         {/* Edit with AI Section */}
-        <div className="bg-white rounded-xl p-4 pb-0 shadow-sm border border-gray-100">
+        <div className="bg-white p-4 pb-0">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-orange-500" />
             <h2 className="text-sm font-medium text-gray-800">Quick Start</h2>
@@ -147,7 +230,7 @@ const ImageEditorAI: React.FC<ImageEditorAIProps> = ({
         </div>
 
         {/* Main Prompt Section */}
-        <div className="bg-white rounded-xl p-4 pb-0 shadow-sm border border-gray-100">
+        <div className="bg-white p-4 pb-0">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
             <h2 className="text-sm font-medium text-gray-800">

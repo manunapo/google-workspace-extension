@@ -92,8 +92,9 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
             <div className="text-xs text-blue-700">
               <p className="font-medium mb-1">Pro tip:</p>
               <p>
-                Click "Insert to Document" to add the image directly to your
-                current document, or download it for later use.
+                Use the Edit tab to resize, change the format, or tweak other
+                aspects of your image. Bonus: You can use the Edit tab with any
+                image!
               </p>
             </div>
           </div>
