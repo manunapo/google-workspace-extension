@@ -55,7 +55,7 @@ const Settings: React.FC = () => {
   const clearError = () => setError(null);
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-white">
       <div className="flex-1 p-4 overflow-y-auto">
         {error && (
           <Alert variant="error" onClose={clearError}>
@@ -64,7 +64,7 @@ const Settings: React.FC = () => {
         )}
 
         {/* Account Information */}
-        <div className="bg-white rounded-xl px-4 shadow-sm border border-gray-100">
+        <div className="bg-white px-4">
           <div className="flex items-center gap-2 mb-2">
             <Mail className="w-4 h-4 text-gray-500" />
             <h2 className="text-sm font-medium text-gray-800">
@@ -91,7 +91,7 @@ const Settings: React.FC = () => {
         </div>
 
         {/* Credits & Billing */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-white p-4">
           <div className="flex items-center gap-2 mb-4">
             <Coins className="w-4 h-4 text-green-500" />
             <h2 className="text-sm font-medium text-gray-800">
@@ -167,7 +167,7 @@ const Settings: React.FC = () => {
         </div>
 
         {/* Help & Support */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mt-4">
+        <div className="bg-white shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <HelpCircle className="w-4 h-4 text-blue-500" />
             <h2 className="text-sm font-medium text-gray-800">Need Help?</h2>
