@@ -29,8 +29,13 @@ const useLoadingMessages = (isGenerating: boolean) => {
     }
 
     const interval = setInterval(() => {
-      setMessageIndex((prev) => (prev + 1) % messages.length);
-    }, 2000);
+      setMessageIndex((prev) => {
+        if (prev < messages.length - 1) {
+          return prev + 1;
+        }
+        return prev; // Stop incrementing at the last message
+      });
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [isGenerating, messages.length]);

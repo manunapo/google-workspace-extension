@@ -1,22 +1,26 @@
-import { generateImage, getUserCredits } from './manager';
+import { generateImage, getUserCredits, insertImageToTarget } from './manager';
 import getUserEmail from './session';
 import {
   onOpen,
+  onInstall,
   openSidebar,
   openAboutUsDialog,
   openTutorialDialog,
+  authorizeAddon,
+  showHelp,
 } from './ui';
-import { insertTextToDoc, insertImageToDoc } from './document';
 
 // Public functions must be exported as named exports
 export {
   onOpen,
+  onInstall,
   openSidebar,
   openAboutUsDialog,
   generateImage,
   getUserEmail,
-  insertTextToDoc,
-  insertImageToDoc,
+  insertImageToTarget,
   getUserCredits,
   openTutorialDialog,
+  authorizeAddon,
+  showHelp,
 };

@@ -1,7 +1,11 @@
+import { insertImageToDoc } from './documents';
 import { generateOpenAIImage } from './lib/openai';
 import { deductDbUserCredits, getDbUserCredits } from './lib/supabase';
+import { insertImageToSlide } from './presentations';
 import { getUserProperties, setUserProperties } from './properties';
 import getUserEmail from './session';
+import { insertImageToSheet } from './spreadsheets';
+import { getScriptContext } from './ui';
 
 /**
  * Higher-order function that wraps a function with user ID authentication
@@ -95,3 +99,22 @@ export const generateImage = withUserIdAuth(
     return imageUrl;
   }
 );
+
+// Insert image into the target document based on context
+export const insertImageToTarget = (imageData: string): void => {
+  const context = getScriptContext();
+
+  switch (context) {
+    case 'docs':
+      insertImageToDoc(imageData);
+      break;
+    case 'sheets':
+      insertImageToSheet(imageData);
+      break;
+    case 'slides':
+      insertImageToSlide(imageData);
+      break;
+    default:
+      throw new Error(`Unsupported context: ${context}`);
+  }
+};

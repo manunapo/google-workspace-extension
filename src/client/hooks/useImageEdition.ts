@@ -61,7 +61,8 @@ export const useImageEdition = (): UseImageEditionReturn => {
   const [cropSettings, setCropSettings] = useState<CropSettings | null>(null);
   const [isCropping, setIsCropping] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [originalDimensions, setOriginalDimensions] = useState<OriginalImageDimensions | null>(null);
+  const [originalDimensions, setOriginalDimensions] =
+    useState<OriginalImageDimensions | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const updateSettings = useCallback(
@@ -71,7 +72,8 @@ export const useImageEdition = (): UseImageEditionReturn => {
 
         // Use original image aspect ratio if available and maintainAspectRatio is true
         if (prev.maintainAspectRatio && originalDimensions) {
-          const originalRatio = originalDimensions.height / originalDimensions.width;
+          const originalRatio =
+            originalDimensions.height / originalDimensions.width;
 
           if (updates.width && originalDimensions.width > 0) {
             newSettings.height = Math.round(updates.width * originalRatio);

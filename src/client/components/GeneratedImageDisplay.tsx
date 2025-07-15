@@ -3,6 +3,7 @@ import { Download, FileImage, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
 import { serverFunctions } from '../utils/serverFunctions';
 import { useToast } from '../hooks/useToast';
+import { resizeImageForSheets } from '../utils/imageResizer';
 
 interface GeneratedImageDisplayProps {
   imageData: string;
@@ -34,8 +35,12 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
   const handleInsertToDocument = async () => {
     try {
       setIsInserting(true);
-      await serverFunctions.insertImageToDoc(imageData);
-      showSuccess('Image inserted into document!');
+
+      // Resize image for Google Sheets compatibility
+      const resizedImageData = await resizeImageForSheets(imageData);
+
+      await serverFunctions.insertImageToTarget(resizedImageData);
+      showSuccess('Image inserted successfully!');
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to insert image';

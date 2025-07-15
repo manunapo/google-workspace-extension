@@ -52,7 +52,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full">
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         {/* Tutorial Section */}
         <TutorialBanner />
