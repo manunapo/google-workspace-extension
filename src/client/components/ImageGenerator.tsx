@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
 import { Zap, Sparkles } from 'lucide-react';
 import Textarea from './ui/textarea';
@@ -11,19 +12,17 @@ interface ImageGeneratorProps {
   setSelectedImage: React.Dispatch<React.SetStateAction<File | null>>;
   prompt: string;
   setPrompt: React.Dispatch<React.SetStateAction<string>>;
-  transparentBackground: boolean;
-  setTransparentBackground: React.Dispatch<React.SetStateAction<boolean>>;
   temperature: number;
   setTemperature: React.Dispatch<React.SetStateAction<number>>;
   generationState: GenerationState;
   lastGeneratedImage: string | null;
+  transparentBackground?: boolean;
+  setTransparentBackground?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ImageGenerator: React.FC<ImageGeneratorProps> = ({
   prompt,
   setPrompt,
-  transparentBackground,
-  setTransparentBackground,
   temperature,
   setTemperature,
   generationState,
@@ -104,7 +103,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
         {/* Advanced Settings */}
         <div className="bg-white px-4 pb-4">
           <div className="px-4 space-y-3">
-            <div className="pt-3">
+            {/* <div className="pt-3">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -117,9 +116,9 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
                   Transparent background
                 </span>
               </label>
-            </div>
+            </div> */}
 
-            <div>
+            <div className="pt-3">
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Creativity: {Math.round(temperature * 100)}%
               </label>

@@ -1,2 +1,4 @@
 export const EXTENSION_NAME = 'GPT Image Generator';
 export const OPENAI_API_KEY = 'OPENAI_API_KEY';
+export const GEMINI_API_KEY = 'GEMINI_API_KEY';
+export const DEFAULT_FREE_CREDITS = '3';

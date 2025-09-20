@@ -187,12 +187,12 @@ const App: React.FC = () => {
                     setSelectedImage={setSelectedImage}
                     prompt={prompt}
                     setPrompt={setPrompt}
-                    transparentBackground={transparentBackground}
-                    setTransparentBackground={setTransparentBackground}
                     temperature={temperature}
                     setTemperature={setTemperature}
                     generationState={generationState}
                     lastGeneratedImage={lastGeneratedImage}
+                    transparentBackground={transparentBackground}
+                    setTransparentBackground={setTransparentBackground}
                   />
                 </div>
               )}
@@ -203,12 +203,12 @@ const App: React.FC = () => {
                     setSelectedImage={setSelectedImage}
                     prompt={prompt}
                     setPrompt={setPrompt}
-                    transparentBackground={transparentBackground}
-                    setTransparentBackground={setTransparentBackground}
                     temperature={temperature}
                     setTemperature={setTemperature}
                     generationState={generationState}
                     lastGeneratedImage={lastGeneratedImage}
+                    transparentBackground={transparentBackground}
+                    setTransparentBackground={setTransparentBackground}
                   />
                 </div>
               )}

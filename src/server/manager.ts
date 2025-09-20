@@ -1,5 +1,7 @@
+import { DEFAULT_FREE_CREDITS } from '../constants';
 import { insertImageToDoc } from './documents';
-import { generateOpenAIImage } from './lib/openai';
+// import { generateOpenAIImage } from './lib/openai';
+import { generateGeminiImage } from './lib/gemini';
 import { deductDbUserCredits, getDbUserCredits } from './lib/supabase';
 import { insertImageToSlide } from './presentations';
 import { getUserProperties, setUserProperties } from './properties';
@@ -30,9 +32,9 @@ export const getUserCredits = withUserIdAuth((userId: string) => {
   const creditsProperty = getUserProperties('free_credits');
   if (creditsProperty === null) {
     console.log(
-      `New user ${userId} has no free credits, giving 2 free credits`
+      `New user ${userId} has no free credits, giving ${DEFAULT_FREE_CREDITS} free credits`
     );
-    setUserProperties('free_credits', '2');
+    setUserProperties('free_credits', DEFAULT_FREE_CREDITS);
   }
   const freeCredits = parseInt(getUserProperties('free_credits') || '0', 10);
   if (freeCredits > 0) {
@@ -70,7 +72,7 @@ export const generateImage = withUserIdAuth(
       );
     }
 
-    const imageUrl = await generateOpenAIImage(
+    const imageUrl = await generateGeminiImage(
       prompt,
       referenceImage,
       Boolean(transparentBackground),

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Upload, Edit3, Sparkles } from 'lucide-react';
@@ -13,12 +14,12 @@ interface ImageEditorAIProps {
   setSelectedImage: React.Dispatch<React.SetStateAction<File | null>>;
   prompt: string;
   setPrompt: React.Dispatch<React.SetStateAction<string>>;
-  transparentBackground: boolean;
-  setTransparentBackground: React.Dispatch<React.SetStateAction<boolean>>;
   temperature: number;
   setTemperature: React.Dispatch<React.SetStateAction<number>>;
   generationState: GenerationState;
   lastGeneratedImage: string | null;
+  transparentBackground?: boolean;
+  setTransparentBackground?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // Utility function to convert base64 to File
@@ -40,8 +41,6 @@ const ImageEditorAI: React.FC<ImageEditorAIProps> = ({
   setSelectedImage,
   prompt,
   setPrompt,
-  transparentBackground,
-  setTransparentBackground,
   temperature,
   setTemperature,
   generationState,
@@ -249,7 +248,7 @@ const ImageEditorAI: React.FC<ImageEditorAIProps> = ({
         {/* Advanced Settings */}
         <div className="bg-white px-4 pb-4">
           <div className="px-4 space-y-3">
-            <div className="pt-3">
+            {/* <div className="pt-3">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -262,9 +261,9 @@ const ImageEditorAI: React.FC<ImageEditorAIProps> = ({
                   Transparent background
                 </span>
               </label>
-            </div>
+            </div> */}
 
-            <div>
+            <div className="pt-3">
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Creativity: {Math.round(temperature * 100)}%
               </label>
