@@ -54,7 +54,6 @@ export const generateImage = withUserIdAuth(
     userId: string,
     prompt: string,
     referenceImage?: string | null,
-    transparentBackground = false,
     temperature = 0.7
   ) => {
     const freeCredits = parseInt(getUserProperties('free_credits') || '0', 10);
@@ -75,7 +74,6 @@ export const generateImage = withUserIdAuth(
     const imageUrl = await generateGeminiImage(
       prompt,
       referenceImage,
-      Boolean(transparentBackground),
       Number(temperature)
     );
 

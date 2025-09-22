@@ -4,7 +4,6 @@ import { GEMINI_API_KEY } from '../../constants';
 
 export interface ImageGenerationOptions {
   prompt: string;
-  transparentBackground?: boolean;
   temperature?: number;
   referenceImage?: string | null;
 }
@@ -13,7 +12,6 @@ export interface ImageGenerationOptions {
 export async function generateGeminiImage(
   prompt: string,
   referenceImage?: string | null,
-  transparentBackground = false,
   temperature = 0.7
 ): Promise<string> {
   try {
@@ -21,7 +19,6 @@ export async function generateGeminiImage(
       'Generating image with Google Gemini gemini-2.5-flash-image-preview'
     );
     console.log('Prompt:', prompt);
-    console.log('Transparent Background:', transparentBackground);
     console.log('Temperature:', temperature);
 
     if (referenceImage) {
@@ -40,13 +37,8 @@ export async function generateGeminiImage(
     // Prepare the request payload
     const parts: unknown[] = [];
 
-    // Add the text prompt with transparency instruction if needed
-    const enhancedPrompt = transparentBackground
-      ? `${prompt}. Make sure the background is transparent.`
-      : prompt;
-
     parts.push({
-      text: enhancedPrompt,
+      text: prompt,
     });
 
     // Add reference image if provided

@@ -27,7 +27,6 @@ export const useImageGeneration = () => {
   const generateImage = async (
     prompt: string,
     referenceImage?: string | null,
-    transparentBackground = false,
     temperature = 0.7
   ) => {
     if (!prompt.trim()) {
@@ -45,7 +44,6 @@ export const useImageGeneration = () => {
       const result = await serverFunctions.generateImage(
         prompt,
         referenceImage,
-        transparentBackground,
         temperature
       );
 

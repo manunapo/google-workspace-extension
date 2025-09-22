@@ -118,12 +118,7 @@ const App: React.FC = () => {
     }
 
     try {
-      await generateImage(
-        prompt,
-        imageData as string | null,
-        transparentBackground,
-        temperature
-      );
+      await generateImage(prompt, imageData as string | null, temperature);
     } finally {
       // Always refresh credits after generation attempt to ensure local state is up to date
       // This handles both successful generations and cases where credits were decremented before an error
