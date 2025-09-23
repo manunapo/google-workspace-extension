@@ -1,10 +1,8 @@
-import { DEFAULT_FREE_CREDITS } from '../constants';
+/* eslint-disable no-console */
 import { insertImageToDoc } from './documents';
-// import { generateOpenAIImage } from './lib/openai';
 import { generateGeminiImage } from './lib/gemini';
-import { deductDbUserCredits, getDbUserCredits } from './lib/supabase';
-import { insertImageToSlide } from './presentations';
-import { getUserProperties, setUserProperties } from './properties';
+import { deductDbUserCredits, getOrCreateDbUser, User } from './lib/supabase';
+import { insertImageToSlide } from './slides';
 import getUserEmail from './session';
 import { insertImageToSheet } from './spreadsheets';
 import { getScriptContext } from './ui';
@@ -28,42 +26,22 @@ function withUserIdAuth<T extends unknown[], R>(
   };
 }
 
-export const getUserCredits = withUserIdAuth((userId: string) => {
-  const creditsProperty = getUserProperties('free_credits');
-  if (creditsProperty === null) {
-    console.log(
-      `New user ${userId} has no free credits, giving ${DEFAULT_FREE_CREDITS} free credits`
-    );
-    setUserProperties('free_credits', DEFAULT_FREE_CREDITS);
+export const getUserCredits = withUserIdAuth(
+  (email: string): Pick<User, 'available_credits'> => {
+    return getOrCreateDbUser(email);
   }
-  const freeCredits = parseInt(getUserProperties('free_credits') || '0', 10);
-  if (freeCredits > 0) {
-    console.log(
-      `User ${userId} has ${freeCredits} free credits from properties`
-    );
-  }
-
-  const dbCredits = getDbUserCredits(userId);
-  return {
-    available_credits: freeCredits + (dbCredits?.available_credits || 0),
-  };
-});
+);
 
 export const generateImage = withUserIdAuth(
   async (
-    userId: string,
+    email: string,
     prompt: string,
     referenceImage?: string | null,
     temperature = 0.7
   ) => {
-    const freeCredits = parseInt(getUserProperties('free_credits') || '0', 10);
-    let availableCredits = freeCredits;
-    let usingFreeCredits = true;
-    if (freeCredits < 1) {
-      const dbCredits = getDbUserCredits(userId);
-      availableCredits = dbCredits?.available_credits || 0;
-      usingFreeCredits = false;
-    }
+    const user = getOrCreateDbUser(email);
+    const credits = user.available_credits;
+    const availableCredits = credits;
 
     if (availableCredits < 1) {
       throw new Error(
@@ -71,20 +49,22 @@ export const generateImage = withUserIdAuth(
       );
     }
 
-    const imageUrl = await generateGeminiImage(
-      prompt,
-      referenceImage,
-      Number(temperature)
-    );
+    let imageUrl: string | null = null;
+    try {
+      imageUrl = await generateGeminiImage(
+        prompt,
+        referenceImage,
+        Number(temperature)
+      );
+    } catch (error) {
+      console.error('Failed to generate image:', error);
+      throw error;
+    }
 
     // Image generation successful - deduct credits
     if (imageUrl) {
       try {
-        if (usingFreeCredits) {
-          setUserProperties('free_credits', (freeCredits - 1).toString());
-        } else {
-          deductDbUserCredits(userId, 1);
-        }
+        deductDbUserCredits(user.email, 1);
         console.log(
           `Credits deducted successfully. Remaining credits: ${
             availableCredits - 1
@@ -92,8 +72,6 @@ export const generateImage = withUserIdAuth(
         );
       } catch (creditError) {
         console.error('Failed to deduct credits:', creditError);
-        // We'll still return the image since generation was successful
-        // but log the credit deduction failure
       }
     }
     return imageUrl;

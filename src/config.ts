@@ -295,11 +295,11 @@ const geminiImageEditorTool: Tool = {
   id: 'gemini-ai-image-editor',
   name: 'AI Image Editor',
   description: 'Edit and transform images using AI',
-  credits: 1, // Using 1 credit for Gemini calls, matching manager.ts
+  credits: 50,
   parameters: {
     referenceImage: {
       type: 'file',
-      required: false,
+      required: true,
       label: 'Source Image',
       placeholder: 'Upload image to edit',
     },

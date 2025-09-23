@@ -146,7 +146,8 @@ export const MAGIC_HOUR_TOOLS = {
           type: 'string',
           required: false,
           label: 'Style Instructions',
-          placeholder: 'Describe the professional style you want (optional)...',
+          placeholder:
+            'We recommend omitting the prompt unless you want to customize your headshot.',
         },
       },
     },

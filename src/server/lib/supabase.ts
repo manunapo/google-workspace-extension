@@ -1,9 +1,5 @@
-/**
- * Supabase REST API Library for User Credits Management
- * Handles getting and updating user credits via Supabase REST API using Google Apps Script UrlFetchApp
- */
-
 import { getScriptProperties } from '../properties';
+import { DEFAULT_FREE_CREDITS } from '../../constants';
 
 // Types based on the database schema
 export interface User {
@@ -18,6 +14,7 @@ export interface User {
   total_purchased_credits: number;
   last_purchase_date?: string;
   referrer?: string;
+  source: string;
 }
 
 export interface UserCredits {
@@ -100,7 +97,7 @@ function handleResponse<T>(
  * @param userId - The user ID to get credits for
  * @returns Promise with user credits information
  */
-export function getDbUserCredits(userId: string): UserCredits | null {
+function getDbUserCredits(userId: string): UserCredits | null {
   const config = getConfig();
   const url = `${config.url}/users?email=eq.${encodeURIComponent(
     userId
@@ -129,15 +126,58 @@ export function getDbUserCredits(userId: string): UserCredits | null {
 }
 
 /**
- * Get full user information by user ID
- * @param userId - The user ID to get information for
- * @returns Promise with full user information
+ * Create a new user in the database
+ * @param email - The user's email address
+ * @returns Newly created user information
  */
-export function getDbUser(userId: string): User | null {
+function createNewUser(email: string): User {
   const config = getConfig();
-  const url = `${config.url}/users?email=eq.${encodeURIComponent(userId)}`;
+  const url = `${config.url}/users`;
+
+  // Extract name from email (optional, can be null)
+  const name = email.split('@')[0];
+
+  const newUserData = {
+    email,
+    name,
+    available_credits: DEFAULT_FREE_CREDITS,
+    source: 'google-addon',
+  };
 
   try {
+    const response = UrlFetchApp.fetch(url, {
+      method: 'POST',
+      headers: createHeaders(),
+      payload: JSON.stringify(newUserData),
+    });
+
+    const createdUsers = handleResponse<User[]>(response);
+
+    if (createdUsers.length === 0) {
+      throw new Error('Failed to create user - no user returned');
+    }
+
+    return createdUsers[0];
+  } catch (error) {
+    throw new Error(
+      `Failed to create user: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`
+    );
+  }
+}
+
+/**
+ * Get or create user information by user ID
+ * @param userId - The user ID (email) to get or create information for
+ * @returns User information (either existing or newly created)
+ */
+export function getOrCreateDbUser(email: string): User {
+  const config = getConfig();
+  const url = `${config.url}/users?email=eq.${encodeURIComponent(email)}`;
+
+  try {
+    // Try to get existing user
     const response = UrlFetchApp.fetch(url, {
       method: 'GET',
       headers: createHeaders(),
@@ -145,14 +185,15 @@ export function getDbUser(userId: string): User | null {
 
     const users = handleResponse<User[]>(response);
 
-    if (users.length === 0) {
-      return null; // User not found
+    if (users.length > 0) {
+      return users[0]; // User found, return existing user
     }
 
-    return users[0];
+    // User not found, create new user
+    return createNewUser(email);
   } catch (error) {
     throw new Error(
-      `Failed to get user: ${
+      `Failed to get or create user: ${
         error instanceof Error ? error.message : 'Unknown error'
       }`
     );

@@ -3,7 +3,6 @@ import {
   CreditCard,
   Mail,
   Coins,
-  RefreshCw,
   Play,
   HelpCircle,
   MessageCircle,
@@ -23,7 +22,6 @@ const ProfilePage: React.FC = () => {
     credits,
     loading: creditsLoading,
     getCreditsDisplay,
-    refreshCredits,
   } = useUserCredits(true);
 
   React.useEffect(() => {
@@ -43,10 +41,6 @@ const ProfilePage: React.FC = () => {
 
   const handleBuyCredits = () => {
     window.open('https://getstyled.art/addon/pricing', '_blank');
-  };
-
-  const handleRefreshCredits = () => {
-    refreshCredits();
   };
 
   const handleOpenTutorial = () => {
@@ -101,17 +95,6 @@ const ProfilePage: React.FC = () => {
                 Credits & Billing
               </h2>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefreshCredits}
-              disabled={creditsLoading}
-              className="h-8 w-8 p-0"
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${creditsLoading ? 'animate-spin' : ''}`}
-              />
-            </Button>
           </div>
 
           <div className="space-y-4">
