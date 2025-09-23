@@ -105,6 +105,19 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <div className="border-t flex justify-end border-gray-100 p-2">
+          <div className="text-xs text-slate-600">
+            Need help?{' '}
+            <a
+              href="mailto:contact@getstyled.art"
+              className="text-blue-600 hover:text-blue-700 hover:underline"
+            >
+              contact@getstyled.art
+            </a>
+          </div>
+        </div>
       </div>
     </>
   );

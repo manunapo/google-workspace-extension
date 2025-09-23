@@ -12,6 +12,7 @@ import { Button } from './ui/button';
 import Alert from './ui/alert';
 import { serverFunctions } from '../utils/serverFunctions';
 import { useUserCredits } from '../hooks/useUserCredits';
+import { VERSION } from '../../constants';
 
 const ProfilePage: React.FC = () => {
   const [userEmail, setUserEmail] = React.useState<string>('');
@@ -219,7 +220,7 @@ const ProfilePage: React.FC = () => {
                   </h3>
                   <p className="text-xs text-gray-600 mb-3">
                     Need help? Our support team is here to assist you with any
-                    questions or issues.
+                    questions or issues (v{VERSION}).
                   </p>
                   <a
                     href="mailto:contact@getstyled.art"

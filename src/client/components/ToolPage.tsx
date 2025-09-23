@@ -174,8 +174,8 @@ const ToolPage: React.FC<ToolPageProps> = ({
       {/* Tool Info */}
       <div className="flex flex-col gap-2 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
         <div className="relative w-full h-32 overflow-hidden rounded-md bg-gradient-to-r from-purple-50 to-blue-50">
-          <div className="absolute bottom-0 left-0 w-full flex items-center gap-2 bg-white/80 p-1">
-            <div className="text-xs w-full italic font-medium text-slate-600 wrap">
+          <div className="absolute bottom-0 w-full flex items-center gap-2 bg-white/80 p-1">
+            <div className="text-xs w-full text-end italic font-medium text-slate-600 wrap">
               {tool.description}.
             </div>
           </div>

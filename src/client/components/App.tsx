@@ -1,256 +1,177 @@
 import * as React from 'react';
-import { Edit3, Sparkles } from 'lucide-react';
-import Navigation from './Navigation';
-import ImageGenerator from './ImageGenerator';
-import ImageEditor from './ImageEditor';
-import ImageEditorAI from './ImageEditorAI';
-import Settings from './Settings';
 import { Toaster } from './ui/sonner';
-import { Button } from './ui/button';
-import Spinner from './ui/spinner';
-import { useImageGeneration } from '../hooks/useImageGeneration';
-import { useUserCredits } from '../hooks/useUserCredits';
+import AppHeader from './AppHeader';
+import NavigationMenu from './NavigationMenu';
+import ToolPage from './ToolPage';
+import ProfilePage from './ProfilePage';
+import type { Tool } from '../../config';
 import { useToast } from '../hooks/useToast';
+import { useUserCredits } from '../hooks/useUserCredits';
 
-type Page = 'home' | 'settings';
+// Types for the app state
+type AppPage = 'tool' | 'profile';
 
-const useLoadingMessages = (isGenerating: boolean) => {
-  const [messageIndex, setMessageIndex] = React.useState(0);
-  const messages = [
-    'Generating image...',
-    'Almost done...',
-    'Finalizing your image...',
-  ];
-
-  React.useEffect(() => {
-    if (!isGenerating) {
-      setMessageIndex(0);
-      return undefined;
-    }
-
-    const interval = setInterval(() => {
-      setMessageIndex((prev) => {
-        if (prev < messages.length - 1) {
-          return prev + 1;
-        }
-        return prev; // Stop incrementing at the last message
-      });
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [isGenerating, messages.length]);
-
-  return messages[messageIndex];
-};
+interface AppState {
+  currentPage: AppPage;
+  currentTool: Tool | null;
+  isMenuOpen: boolean;
+  isExecuting: boolean;
+}
 
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = React.useState<Page>('home');
-  const [currentTab, setCurrentTab] = React.useState('generate');
+  // Main app state
+  const [state, setState] = React.useState<AppState>({
+    currentPage: 'tool',
+    currentTool: null, // No tool selected initially
+    isMenuOpen: true, // Start with menu open as landing page
+    isExecuting: false,
+  });
 
-  // Shared generation state and form data
-  const [selectedImage, setSelectedImage] = React.useState<File | null>(null);
-  const [prompt, setPrompt] = React.useState('');
-  const [transparentBackground, setTransparentBackground] =
-    React.useState(false);
-  const [temperature, setTemperature] = React.useState(0.7);
-  const [lastGeneratedImage, setLastGeneratedImage] = React.useState<
-    string | null
-  >(null);
+  const { showError, showSuccess } = useToast();
+  const { refreshCredits } = useUserCredits();
 
-  const { generationState, generateImage } = useImageGeneration();
-  const currentLoadingMessage = useLoadingMessages(
-    generationState.isGenerating
-  );
-  const { hasEnoughCredits, refreshCredits } = useUserCredits(true);
-  const { showError } = useToast();
+  // Generated image state (used by ToolPage)
+  const [generatedImage] = React.useState<string | null>(null);
+  const [lastGeneratedImage] = React.useState<string | null>(null);
 
-  // Load last generated image from localStorage on mount
-  React.useEffect(() => {
-    try {
-      const savedImage = localStorage.getItem('getstyled-last-generated-image');
-      if (savedImage) {
-        setLastGeneratedImage(savedImage);
-      }
-    } catch (error) {
-      console.error('Error loading saved image from localStorage:', error);
-    }
-  }, []);
-
+  // Initialize credits on mount
   React.useEffect(() => {
     refreshCredits();
+  }, [refreshCredits]);
+
+  // Handle navigation actions
+  const navigateToTool = React.useCallback((tool: Tool) => {
+    setState((prev) => ({
+      ...prev,
+      currentPage: 'tool',
+      currentTool: tool,
+      isMenuOpen: false,
+    }));
   }, []);
 
-  // Save generated image to localStorage whenever a new one is generated
-  React.useEffect(() => {
-    if (generationState.generatedImage) {
+  const navigateToProfile = React.useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      currentPage: 'profile',
+      isMenuOpen: false,
+    }));
+  }, []);
+
+  const toggleMenu = React.useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      isMenuOpen: !prev.isMenuOpen,
+    }));
+  }, []);
+
+  const closeMenu = React.useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      isMenuOpen: false,
+    }));
+  }, []);
+
+  // Execute tool with parameters
+  const executeToolAction = React.useCallback(
+    async (toolId: string, parameters: Record<string, unknown>) => {
+      setState((prev) => ({ ...prev, isExecuting: true }));
+
       try {
-        localStorage.setItem(
-          'getstyled-last-generated-image',
-          generationState.generatedImage
-        );
-        setLastGeneratedImage(generationState.generatedImage);
+        // Here you would call the appropriate server function
+        // For now, we'll show a success message
+        // TODO: Implement actual tool execution based on toolId
+
+        console.log('Executing tool:', toolId, 'with parameters:', parameters);
+
+        // Simulate API call
+        await new Promise((resolve) => {
+          setTimeout(resolve, 2000);
+        });
+
+        // Refresh credits after successful execution
+        refreshCredits();
+
+        showSuccess(`Successfully executed ${toolId}!`);
       } catch (error) {
-        console.error('Error saving image to localStorage:', error);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Tool execution failed';
+        showError(errorMessage);
+      } finally {
+        setState((prev) => ({ ...prev, isExecuting: false }));
       }
-    }
-  }, [generationState.generatedImage]);
-
-  const handleNavigate = (page: Page) => {
-    setCurrentPage(page);
-  };
-
-  const handleGenerate = async () => {
-    if (!hasEnoughCredits()) {
-      setCurrentPage('settings');
-      showError(
-        'Insufficient credits to generate image. Please purchase more credits.'
-      );
-      return;
-    }
-    let imageData = null;
-
-    if (selectedImage) {
-      const reader = new FileReader();
-      imageData = await new Promise((resolve) => {
-        reader.onload = (e) => resolve(e.target?.result);
-        reader.readAsDataURL(selectedImage);
-      });
-    }
-
-    try {
-      await generateImage(prompt, imageData as string | null, temperature);
-    } finally {
-      // Always refresh credits after generation attempt to ensure local state is up to date
-      // This handles both successful generations and cases where credits were decremented before an error
-      refreshCredits();
-    }
-  };
-
-  const handleTabChange = (value: string) => {
-    setCurrentTab(value);
-  };
+    },
+    [showError, showSuccess, refreshCredits]
+  );
 
   return (
-    <div className="h-screen flex flex-col bg-white">
-      <Navigation currentPage={currentPage} onNavigate={handleNavigate} />
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Toast notifications */}
       <Toaster position="top-center" />
+
+      {/* Header - Always visible */}
+      <AppHeader
+        currentTool={state.currentTool}
+        currentPage={state.currentPage}
+        isMenuOpen={state.isMenuOpen}
+        onMenuClick={toggleMenu}
+        onProfileClick={navigateToProfile}
+      />
+
+      {/* Navigation Menu - Overlay */}
+      <NavigationMenu
+        isOpen={state.isMenuOpen}
+        onClose={closeMenu}
+        onToolSelect={navigateToTool}
+        onProfileSelect={navigateToProfile}
+      />
+
+      {/* Main Content Area */}
       <div className="flex-1 overflow-hidden">
-        {currentPage === 'home' && (
-          <div className="h-full flex flex-col">
-            <div className="flex justify-center">
-              <div className="flex border-b border-gray-200 mb-2">
-                <button
-                  onClick={() => handleTabChange('generate')}
-                  className={`flex items-center px-2 py-2 text-nowrap overflow-hidden gap-2 text-sm font-medium transition-colors border-b-2 ${
-                    currentTab === 'generate'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Generate AI
-                </button>
-                <button
-                  onClick={() => handleTabChange('edit-ai')}
-                  className={`flex items-center px-2 py-2 text-nowrap overflow-hidden gap-2 text-sm font-medium transition-colors border-b-2 ${
-                    currentTab === 'edit-ai'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Edit AI
-                </button>
-                <button
-                  onClick={() => handleTabChange('edit')}
-                  className={`flex items-center px-2 py-2 text-nowrap overflow-hidden gap-2 text-sm font-medium transition-colors border-b-2 ${
-                    currentTab === 'edit'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Edit3 className="w-4 h-4" />
-                  Edit
-                </button>
+        {state.currentPage === 'profile' && <ProfilePage />}
+
+        {state.currentPage === 'tool' && state.currentTool && (
+          <ToolPage
+            tool={state.currentTool}
+            onExecute={executeToolAction}
+            isExecuting={state.isExecuting}
+            generatedImage={generatedImage}
+            lastGeneratedImage={lastGeneratedImage}
+          />
+        )}
+
+        {state.currentPage === 'tool' && !state.currentTool && (
+          <div className="h-full flex flex-col items-center justify-center p-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl text-gray-400">🤖</span>
               </div>
-            </div>
-            <div className="flex-1 overflow-hidden bg-white">
-              {currentTab === 'generate' && (
-                <div className="h-full overflow-auto">
-                  <ImageGenerator
-                    selectedImage={selectedImage}
-                    setSelectedImage={setSelectedImage}
-                    prompt={prompt}
-                    setPrompt={setPrompt}
-                    temperature={temperature}
-                    setTemperature={setTemperature}
-                    generationState={generationState}
-                    lastGeneratedImage={lastGeneratedImage}
-                    transparentBackground={transparentBackground}
-                    setTransparentBackground={setTransparentBackground}
-                  />
-                </div>
-              )}
-              {currentTab === 'edit-ai' && (
-                <div className="h-full overflow-auto">
-                  <ImageEditorAI
-                    selectedImage={selectedImage}
-                    setSelectedImage={setSelectedImage}
-                    prompt={prompt}
-                    setPrompt={setPrompt}
-                    temperature={temperature}
-                    setTemperature={setTemperature}
-                    generationState={generationState}
-                    lastGeneratedImage={lastGeneratedImage}
-                    transparentBackground={transparentBackground}
-                    setTransparentBackground={setTransparentBackground}
-                  />
-                </div>
-              )}
-              {currentTab === 'edit' && (
-                <div className="h-full overflow-auto">
-                  <ImageEditor
-                    selectedImage={selectedImage}
-                    setSelectedImage={setSelectedImage}
-                    prompt={prompt}
-                    setPrompt={setPrompt}
-                    transparentBackground={transparentBackground}
-                    setTransparentBackground={setTransparentBackground}
-                    temperature={temperature}
-                    setTemperature={setTemperature}
-                    generationState={generationState}
-                    lastGeneratedImage={lastGeneratedImage}
-                  />
-                </div>
-              )}
+              <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                No Tool Selected
+              </h2>
+              <p className="text-gray-600 mb-4 max-w-sm">
+                Choose an AI tool from the menu to get started with your
+                creative projects.
+              </p>
+              <button
+                onClick={toggleMenu}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Browse Tools
+              </button>
             </div>
           </div>
         )}
-        {currentPage === 'settings' && <Settings />}
       </div>
 
-      {/* Persistent Generate Button - Only shown on home page and not in edit tab */}
-      {currentPage === 'home' && currentTab !== 'edit' && (
-        <div className="p-4 bg-white border-t border-gray-200">
-          <Button
-            onClick={handleGenerate}
-            disabled={generationState.isGenerating || !prompt.trim()}
-            className="w-full h-12 text-base font-medium bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg"
-          >
-            {generationState.isGenerating ? (
-              <div className="flex items-center text-white gap-2">
-                <Spinner size="sm" />
-                <span>{currentLoadingMessage}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-white">
-                <Sparkles className="w-5 h-5" />
-                <span>
-                  {currentTab === 'edit-ai' ? 'Edit Image' : 'Generate Image'}
-                </span>
-              </div>
-            )}
-          </Button>
+      {/* Loading overlay during execution */}
+      {state.isExecuting && (
+        <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 shadow-lg">
+            <div className="flex items-center space-x-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+              <span className="text-gray-700">Processing your request...</span>
+            </div>
+          </div>
         </div>
       )}
     </div>
