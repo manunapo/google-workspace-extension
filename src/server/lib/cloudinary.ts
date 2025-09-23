@@ -63,7 +63,7 @@ function generateSignature(
 }
 
 // Upload image to Cloudinary
-export async function uploadImageToCloudinary(
+async function uploadImageToCloudinary(
   imageData: string,
   options: CloudinaryUploadOptions = {}
 ): Promise<CloudinaryUploadResponse> {

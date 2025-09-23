@@ -1,4 +1,9 @@
-import { generateImage, getUserCredits, insertImageToTarget } from './manager';
+import {
+  generateImage,
+  getUserCredits,
+  insertImageToTarget,
+  executeTool,
+} from './manager';
 import getUserEmail from './session';
 import {
   onOpen,
@@ -23,4 +28,5 @@ export {
   openTutorialDialog,
   authorizeAddon,
   showHelp,
+  executeTool,
 };

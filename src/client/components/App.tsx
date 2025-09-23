@@ -5,8 +5,10 @@ import NavigationMenu from './NavigationMenu';
 import ToolPage from './ToolPage';
 import ProfilePage from './ProfilePage';
 import type { Tool } from '../../config';
+import { availableTools } from '../../config';
 import { useToast } from '../hooks/useToast';
 import { useUserCredits } from '../hooks/useUserCredits';
+import { serverFunctions } from '../utils/serverFunctions';
 
 // Types for the app state
 type AppPage = 'tool' | 'profile';
@@ -30,9 +32,13 @@ const App: React.FC = () => {
   const { showError, showSuccess } = useToast();
   const { refreshCredits } = useUserCredits();
 
-  // Generated image state (used by ToolPage)
-  const [generatedImage] = React.useState<string | null>(null);
-  const [lastGeneratedImage] = React.useState<string | null>(null);
+  // Generated image state
+  const [generatedImage, setGeneratedImage] = React.useState<string | null>(
+    null
+  );
+  const [lastGeneratedImage, setLastGeneratedImage] = React.useState<
+    string | null
+  >(null);
 
   // Initialize credits on mount
   React.useEffect(() => {
@@ -77,21 +83,42 @@ const App: React.FC = () => {
       setState((prev) => ({ ...prev, isExecuting: true }));
 
       try {
-        // Here you would call the appropriate server function
-        // For now, we'll show a success message
-        // TODO: Implement actual tool execution based on toolId
+        // Find the tool configuration to get credits
+        const tool = availableTools.find((t: Tool) => t.id === toolId);
+        if (!tool) {
+          throw new Error(`Tool ${toolId} not found`);
+        }
 
         console.log('Executing tool:', toolId, 'with parameters:', parameters);
-
-        // Simulate API call
-        await new Promise((resolve) => {
-          setTimeout(resolve, 2000);
+        // TODO: Move this logic to the file loader component
+        // refresh credits after executeTool
+        // fix generated photo appearing below the CTA BUtton
+        let imageData = null;
+        if (parameters.referenceImage) {
+          const reader = new FileReader();
+          imageData = await new Promise((resolve) => {
+            reader.onload = (e) => resolve(e.target?.result);
+            reader.readAsDataURL(parameters.referenceImage as File);
+          });
+        }
+        // Call the unified tool executor
+        const result = await serverFunctions.executeTool(toolId, tool.credits, {
+          ...parameters,
+          referenceImage: imageData,
         });
+
+        console.log('Tool execution result:', result);
+
+        // Update generated image state if result is an image
+        if (result && typeof result === 'string') {
+          setGeneratedImage(result);
+          setLastGeneratedImage(result);
+        }
 
         // Refresh credits after successful execution
         refreshCredits();
 
-        showSuccess(`Successfully executed ${toolId}!`);
+        showSuccess(`Successfully executed ${tool.name}!`);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Tool execution failed';
@@ -100,7 +127,13 @@ const App: React.FC = () => {
         setState((prev) => ({ ...prev, isExecuting: false }));
       }
     },
-    [showError, showSuccess, refreshCredits]
+    [
+      showError,
+      showSuccess,
+      refreshCredits,
+      setGeneratedImage,
+      setLastGeneratedImage,
+    ]
   );
 
   return (

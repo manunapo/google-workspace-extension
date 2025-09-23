@@ -228,6 +228,7 @@ export interface Tool {
   isNew: boolean;
   prompts: Prompt[];
   labelActionButton: string;
+  executionFunction: string; // Reference to the server function name
 }
 
 // Tool descriptions mapping
@@ -274,6 +275,17 @@ const toolActionLabels: Record<string, string> = {
   'ai-clothes-changer': 'Change Clothes',
 };
 
+// Tool execution function mapping - Direct mapping to specific Magic Hour functions
+const toolExecutionFunctions: Record<string, string> = {
+  'ai-image-generator': 'generateAIImage',
+  'ai-gif-creator': 'generateAIGif',
+  'ai-headshot-generator': 'generateAIHeadshot',
+  'ai-meme-generator': 'generateAIMeme',
+  'image-background-remover': 'removeImageBackground',
+  'face-swap-photo': 'swapFaces',
+  'ai-clothes-changer': 'changeClothes',
+};
+
 // Transform Magic Hour tools to Tool interface format
 const magicHourTools: Tool[] = Object.entries(MAGIC_HOUR_TOOLS).map(
   ([id, config]) => ({
@@ -287,6 +299,7 @@ const magicHourTools: Tool[] = Object.entries(MAGIC_HOUR_TOOLS).map(
     isNew: id === 'ai-image-generator' ? false : true,
     prompts: getPromptsForTool(id),
     labelActionButton: toolActionLabels[id] || 'Execute Tool',
+    executionFunction: toolExecutionFunctions[id] || 'executeGenericTool',
   })
 );
 
@@ -323,6 +336,7 @@ const geminiImageEditorTool: Tool = {
   isNew: false,
   prompts: editPrompts,
   labelActionButton: 'Edit Image',
+  executionFunction: 'executeGeminiImageEditor',
 };
 
 // Export all available tools
