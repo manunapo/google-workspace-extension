@@ -17,21 +17,6 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
   onToolSelect,
   onProfileSelect,
 }) => {
-  // Close menu on escape key
-  React.useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
-    }
-    return undefined;
-  }, [isOpen, onClose]);
-
   if (!isOpen) return null;
 
   const handleToolClick = (tool: Tool) => {

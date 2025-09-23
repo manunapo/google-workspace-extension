@@ -17,51 +17,29 @@ const NumberParameter: React.FC<NumberParameterProps> = ({
   onChange,
   min,
   max,
-  step = 1,
+  step = 0.1,
   required = false,
   disabled = false,
 }) => {
-  const inputId = React.useId();
-
   return (
-    <div className="space-y-2">
-      <label
-        htmlFor={inputId}
-        className="block text-sm font-medium text-gray-700"
-      >
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-        {min !== undefined && max !== undefined && (
-          <span className="text-xs text-gray-500 ml-2">
-            ({min}-{max})
-          </span>
-        )}
+    <div className="bg-white">
+      <label className="block text-xs font-medium text-gray-700 mb-1">
+        {label}: {Math.round(value * 50)}%
+        {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
-      <div className="flex items-center space-x-2">
-        <input
-          id={inputId}
-          type="number"
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          min={min}
-          max={max}
-          step={step}
-          disabled={disabled}
-          required={required}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-        />
-        {min !== undefined && max !== undefined && (
-          <input
-            type="range"
-            value={value}
-            onChange={(e) => onChange(Number(e.target.value))}
-            min={min}
-            max={max}
-            step={step}
-            disabled={disabled}
-            className="flex-1 accent-blue-500"
-          />
-        )}
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thin-thumb"
+        disabled={disabled}
+      />
+      <div className="flex justify-between text-xs text-gray-400 mt-1">
+        <span>Conservative</span>
+        <span>Creative</span>
       </div>
     </div>
   );

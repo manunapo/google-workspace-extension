@@ -1,5 +1,30 @@
 import * as React from 'react';
-import { ChevronDown } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+
+/**
+ * Transforms kebab-case and snake_case values into display names
+ * Example: "ai-manga-style" -> "AI Manga Style"
+ * Example: "upper_body" -> "Upper Body"
+ */
+const createDisplayName = (value: string): string => {
+  return value
+    .split(/[-_]/) // Split by both hyphens and underscores
+    .map((word) => {
+      // Special case for 'ai' -> 'AI'
+      if (word.toLowerCase() === 'ai') {
+        return 'AI';
+      }
+      // Capitalize first letter of each word
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+};
 
 interface EnumParameterProps {
   label: string;
@@ -25,7 +50,10 @@ const EnumParameter: React.FC<EnumParameterProps> = ({
   // Convert options to array of {value, label} objects
   const optionsList = React.useMemo(() => {
     if (Array.isArray(options)) {
-      return options.map((option) => ({ value: option, label: option }));
+      return options.map((option) => ({
+        value: option,
+        label: createDisplayName(option),
+      }));
     }
     // eslint-disable-next-line no-shadow
     return Object.entries(options).map(([value, label]) => ({ value, label }));
@@ -33,31 +61,33 @@ const EnumParameter: React.FC<EnumParameterProps> = ({
 
   return (
     <div className="space-y-2">
-      <label
-        htmlFor={selectId}
-        className="block text-sm font-medium text-gray-700"
-      >
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      <div className="relative">
-        <select
-          id={selectId}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-          required={required}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 appearance-none bg-white pr-8"
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+        <label
+          htmlFor={selectId}
+          className="block text-sm font-medium text-gray-700"
         >
-          {!required && <option value="">{placeholder}</option>}
-          {optionsList.map(({ value: optionValue, label: optionLabel }) => (
-            <option key={optionValue} value={optionValue}>
-              {optionLabel}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
+          {label}
+          {required && <span className="text-red-500 ml-0.5">*</span>}
+        </label>
       </div>
+      <Select
+        value={value}
+        onValueChange={onChange}
+        disabled={disabled}
+        required={required}
+      >
+        <SelectTrigger id={selectId}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {optionsList.map(({ value: optionValue, label: optionLabel }) => (
+            <SelectItem key={optionValue} value={optionValue}>
+              {optionLabel}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };

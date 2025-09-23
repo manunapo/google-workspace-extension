@@ -4,7 +4,6 @@ import AppHeader from './AppHeader';
 import NavigationMenu from './NavigationMenu';
 import ToolPage from './ToolPage';
 import ProfilePage from './ProfilePage';
-import { availableTools } from '../../config';
 import type { Tool } from '../../config';
 import { useToast } from '../hooks/useToast';
 import { useUserCredits } from '../hooks/useUserCredits';
@@ -23,13 +22,17 @@ const App2: React.FC = () => {
   // Main app state
   const [state, setState] = React.useState<AppState>({
     currentPage: 'tool',
-    currentTool: availableTools[0] || null, // Default to first tool
-    isMenuOpen: false,
+    currentTool: null, // No tool selected initially
+    isMenuOpen: true, // Start with menu open as landing page
     isExecuting: false,
   });
 
   const { showError, showSuccess } = useToast();
   const { refreshCredits } = useUserCredits();
+
+  // Generated image state (used by ToolPage)
+  const [generatedImage] = React.useState<string | null>(null);
+  const [lastGeneratedImage] = React.useState<string | null>(null);
 
   // Initialize credits on mount
   React.useEffect(() => {
@@ -100,39 +103,6 @@ const App2: React.FC = () => {
     [showError, showSuccess, refreshCredits]
   );
 
-  // Handle keyboard shortcuts
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Close menu on Escape
-      if (event.key === 'Escape' && state.isMenuOpen) {
-        closeMenu();
-        return;
-      }
-
-      // Toggle menu with Cmd+K or Ctrl+K
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-        event.preventDefault();
-        toggleMenu();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [state.isMenuOpen, closeMenu, toggleMenu]);
-
-  // Prevent menu interactions from affecting the page behind
-  React.useEffect(() => {
-    if (state.isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [state.isMenuOpen]);
-
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Toast notifications */}
@@ -164,6 +134,8 @@ const App2: React.FC = () => {
             tool={state.currentTool}
             onExecute={executeToolAction}
             isExecuting={state.isExecuting}
+            generatedImage={generatedImage}
+            lastGeneratedImage={lastGeneratedImage}
           />
         )}
 

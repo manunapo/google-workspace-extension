@@ -15,6 +15,10 @@ interface ParameterConfig {
   max?: number;
   default?: any;
   values?: string[];
+  label?: string;
+  placeholder?: string;
+  description?: string;
+  display?: boolean;
 }
 
 interface ParameterRendererProps {
@@ -23,6 +27,9 @@ interface ParameterRendererProps {
   value: any;
   onChange: (value: any) => void;
   disabled?: boolean;
+  toolId?: string;
+  generatedImage?: string | null;
+  lastGeneratedImage?: string | null;
 }
 
 const ParameterRenderer: React.FC<ParameterRendererProps> = ({
@@ -31,8 +38,15 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
   value,
   onChange,
   disabled = false,
+  toolId,
+  generatedImage,
+  lastGeneratedImage,
 }) => {
-  // Generate a human-readable label from the parameter key
+  // Hide parameters that have display: false
+  if (config.display === false) {
+    return null;
+  }
+  // Use configured label or generate fallback from parameter key
   const generateLabel = (key: string) => {
     return key
       .split(/[_-]/)
@@ -40,14 +54,34 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
       .join(' ');
   };
 
-  const label = generateLabel(parameterKey);
+  const label = config.label || generateLabel(parameterKey);
+  const placeholder = config.placeholder || `Enter ${label.toLowerCase()}...`;
 
   switch (config.type) {
+    case 'file':
+      // Explicit file parameter type
+      return (
+        <FileParameter
+          label={label}
+          value={value || ''}
+          onChange={onChange}
+          required={config.required}
+          disabled={disabled}
+          accept="image/*"
+          placeholder={placeholder}
+          generatedImage={generatedImage}
+          lastGeneratedImage={lastGeneratedImage}
+        />
+      );
+
     case 'string':
-      // Check if it's a file path parameter
+      // Check if it's a file path parameter (fallback for Magic Hour tools)
       if (
         parameterKey.includes('file_path') ||
-        parameterKey.includes('image')
+        parameterKey.includes('image') ||
+        parameterKey.includes('Image') ||
+        parameterKey.toLowerCase().includes('photo') ||
+        parameterKey.toLowerCase().includes('upload')
       ) {
         return (
           <FileParameter
@@ -57,16 +91,16 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
             required={config.required}
             disabled={disabled}
             accept="image/*"
-            placeholder={`Enter ${label.toLowerCase()} URL`}
+            placeholder={placeholder}
+            generatedImage={generatedImage}
+            lastGeneratedImage={lastGeneratedImage}
           />
         );
       }
 
       // Check if it should be multiline (prompts, topics, etc.)
       const isMultiline =
-        parameterKey.includes('prompt') ||
-        parameterKey.includes('topic') ||
-        parameterKey.includes('template');
+        parameterKey.includes('prompt') || parameterKey.includes('topic');
 
       return (
         <StringParameter
@@ -76,7 +110,8 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
           required={config.required}
           disabled={disabled}
           multiline={isMultiline}
-          placeholder={`Enter ${label.toLowerCase()}...`}
+          placeholder={placeholder}
+          toolId={toolId}
         />
       );
 
@@ -98,13 +133,13 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
       if (parameterKey === 'tool' && config.values?.includes('general')) {
         return (
           <EnumParameter
-            label={`${label} Style`}
+            label={label}
             value={value || config.default || ''}
             onChange={onChange}
             options={AI_IMAGE_TOOLS}
             required={config.required}
             disabled={disabled}
-            placeholder="Select a style..."
+            placeholder={placeholder}
           />
         );
       }
@@ -117,7 +152,7 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
           options={config.values || []}
           required={config.required}
           disabled={disabled}
-          placeholder={`Select ${label.toLowerCase()}...`}
+          placeholder={placeholder}
         />
       );
 
@@ -128,6 +163,7 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
           value={value ?? config.default ?? false}
           onChange={onChange}
           disabled={disabled}
+          description={config.description}
         />
       );
 
@@ -153,7 +189,7 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
           required={config.required}
           disabled={disabled}
           multiline={true}
-          placeholder="Enter array values as JSON..."
+          placeholder={placeholder}
         />
       );
 
@@ -166,6 +202,7 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
           onChange={onChange}
           required={config.required}
           disabled={disabled}
+          placeholder={placeholder}
         />
       );
   }

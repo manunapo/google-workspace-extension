@@ -72,19 +72,37 @@ export const MAGIC_HOUR_TOOLS = {
     endpoint: '/v1/ai-image-generator',
     credits: 5,
     parameters: {
-      image_count: { type: 'number', min: 1, max: 4, default: 1 },
-      orientation: {
-        type: 'enum',
-        values: ['square', 'landscape', 'portrait'],
-        default: 'landscape',
-      },
       style: {
-        prompt: { type: 'string', required: true },
+        prompt: {
+          type: 'string',
+          required: true,
+          label: 'Describe Your Vision',
+          placeholder:
+            'What would you like to create? Be as detailed as possible...',
+        },
         tool: {
           type: 'enum',
           values: Object.keys(AI_IMAGE_TOOLS),
           required: false,
+          label: 'Art Style',
+          placeholder: 'Select a creative style',
         },
+      },
+      image_count: {
+        type: 'number',
+        min: 1,
+        max: 4,
+        default: 1,
+        label: 'Number of Images',
+        placeholder: 'How many images to generate',
+        display: false,
+      },
+      orientation: {
+        type: 'enum',
+        values: ['square', 'landscape', 'portrait'],
+        default: 'landscape',
+        label: 'Image Orientation',
+        placeholder: 'Choose image dimensions',
       },
     },
   },
@@ -94,9 +112,20 @@ export const MAGIC_HOUR_TOOLS = {
     credits: 50,
     parameters: {
       style: {
-        prompt: { type: 'string', required: true },
+        prompt: {
+          type: 'string',
+          required: true,
+          label: 'Animation Description',
+          placeholder: 'Describe the animated scene you want to create...',
+        },
       },
-      output_format: { type: 'string', default: 'gif' },
+      output_format: {
+        type: 'enum',
+        values: ['gif', 'mp4', 'webm'],
+        default: 'gif',
+        label: 'Output Format',
+        placeholder: 'File format for the animation',
+      },
     },
   },
   'ai-headshot-generator': {
@@ -104,11 +133,21 @@ export const MAGIC_HOUR_TOOLS = {
     endpoint: '/v1/ai-headshot-generator',
     credits: 50,
     parameters: {
-      style: {
-        prompt: { type: 'string', required: false },
-      },
       assets: {
-        image_file_path: { type: 'string', required: true },
+        image_file_path: {
+          type: 'string',
+          required: true,
+          label: 'Source Photo',
+          placeholder: 'Upload your photo or enter image URL',
+        },
+      },
+      style: {
+        prompt: {
+          type: 'string',
+          required: false,
+          label: 'Style Instructions',
+          placeholder: 'Describe the professional style you want (optional)...',
+        },
       },
     },
   },
@@ -118,9 +157,38 @@ export const MAGIC_HOUR_TOOLS = {
     credits: 10,
     parameters: {
       style: {
-        topic: { type: 'string', required: true },
-        template: { type: 'string', required: false },
-        searchWeb: { type: 'boolean', default: false },
+        topic: {
+          type: 'string',
+          required: true,
+          label: 'Meme Topic',
+          placeholder: 'What should your meme be about?',
+        },
+        template: {
+          type: 'enum',
+          values: [
+            'Random',
+            'Drake Hotline Bling',
+            'Galaxy Brain',
+            "Two Buttons, Gru's Plan",
+            'Tuxedo Winnie The Pooh',
+            'Is This a Pigeon',
+            'Panik Kalm Panik',
+            'Disappointed Guy',
+            'Waiting Skeleton',
+            'Bike Fall',
+            'Change My Mind',
+            'Side Eyeing Chloe',
+          ],
+          default: 'Drake Hotline Bling',
+          label: 'Meme Template',
+          placeholder: 'Choose a meme format',
+        },
+        searchWeb: {
+          type: 'boolean',
+          default: false,
+          label: 'Search web for content',
+          description: 'Whether to search the web for meme content.',
+        },
       },
     },
   },
@@ -130,8 +198,19 @@ export const MAGIC_HOUR_TOOLS = {
     credits: 5,
     parameters: {
       assets: {
-        image_file_path: { type: 'string', required: true },
-        background_image_file_path: { type: 'string', required: false },
+        image_file_path: {
+          type: 'string',
+          required: true,
+          label: 'Source Image',
+          placeholder: 'Upload image or enter URL',
+        },
+        background_image_file_path: {
+          type: 'string',
+          required: false,
+          label: 'New Background (Optional)',
+          placeholder:
+            'Upload replacement background or leave empty to remove only',
+        },
       },
     },
   },
@@ -141,14 +220,25 @@ export const MAGIC_HOUR_TOOLS = {
     credits: 5,
     parameters: {
       assets: {
+        target_file_path: {
+          type: 'string',
+          required: true,
+          label: 'Target Photo',
+          placeholder: 'Upload photo where face will be swapped',
+        },
+        source_file_path: {
+          type: 'string',
+          required: false,
+          label: 'Source Face (Optional)',
+          placeholder: 'Upload photo with face to copy from',
+        },
         face_swap_mode: {
           type: 'enum',
-          values: ['all-faces', 'individual-faces'],
-          default: 'all-faces',
+          values: ['individual-faces'],
+          default: 'individual-faces',
+          label: 'Swap Mode',
+          placeholder: 'How to handle multiple faces',
         },
-        source_file_path: { type: 'string', required: false },
-        target_file_path: { type: 'string', required: true },
-        face_mappings: { type: 'array', required: false },
       },
     },
   },
@@ -158,12 +248,24 @@ export const MAGIC_HOUR_TOOLS = {
     credits: 25,
     parameters: {
       assets: {
-        person_file_path: { type: 'string', required: true },
-        garment_file_path: { type: 'string', required: true },
+        person_file_path: {
+          type: 'string',
+          required: true,
+          label: 'Person Photo',
+          placeholder: 'Upload photo of person to change clothes',
+        },
+        garment_file_path: {
+          type: 'string',
+          required: true,
+          label: 'Clothing Item',
+          placeholder: 'Upload photo of clothing to apply',
+        },
         garment_type: {
           type: 'enum',
           values: ['upper_body', 'lower_body', 'full_body'],
           required: true,
+          label: 'Clothing Type',
+          placeholder: 'What part of outfit to change',
         },
       },
     },

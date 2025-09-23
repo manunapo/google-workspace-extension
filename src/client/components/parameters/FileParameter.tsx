@@ -1,15 +1,31 @@
 import * as React from 'react';
-import { Upload, X, Image } from 'lucide-react';
+import { Upload } from 'lucide-react';
 
 interface FileParameterProps {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
+  value: File | string;
+  onChange: (value: File | string) => void;
   required?: boolean;
   disabled?: boolean;
   accept?: string;
   placeholder?: string;
+  generatedImage?: string | null;
+  lastGeneratedImage?: string | null;
 }
+
+// Utility function to convert base64 to File
+const base64ToFile = (base64: string, filename: string): File => {
+  const arr = base64.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n > 0) {
+    n -= 1;
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+};
 
 const FileParameter: React.FC<FileParameterProps> = ({
   label,
@@ -18,128 +34,135 @@ const FileParameter: React.FC<FileParameterProps> = ({
   required = false,
   disabled = false,
   accept = 'image/*',
-  placeholder = 'Choose file or enter URL',
+  placeholder = 'Upload image',
+  generatedImage,
+  lastGeneratedImage,
 }) => {
-  const inputId = React.useId();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = React.useState(false);
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
 
-  const handleFileSelect = React.useCallback(
-    (file: File) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result;
-        if (typeof result === 'string') {
-          onChange(result);
-        }
+  // Generate preview URL when file changes
+  React.useEffect(() => {
+    if (value instanceof File) {
+      const url = URL.createObjectURL(value);
+      setPreviewUrl(url);
+
+      // Cleanup previous URL
+      return () => {
+        URL.revokeObjectURL(url);
       };
-      reader.readAsDataURL(file);
-    },
-    [onChange]
-  );
+    }
+    setPreviewUrl(null);
+    return undefined;
+  }, [value]);
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
-      handleFileSelect(file);
+      onChange(file);
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-
-    const { files } = e.dataTransfer;
-    if (files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragOver(false);
-  };
-
-  const clearFile = () => {
-    onChange('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const handleAddGeneratedImage = () => {
+    const availableImage = generatedImage || lastGeneratedImage;
+    if (availableImage) {
+      try {
+        const timestamp = Date.now();
+        const file = base64ToFile(
+          availableImage,
+          `generated-image-${timestamp}.png`
+        );
+        onChange(file);
+      } catch (error) {
+        console.error('Failed to load generated image:', error);
+      }
     }
   };
 
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-
-      {/* URL Input */}
-      <input
-        type="text"
-        value={
-          typeof value === 'string' && value.startsWith('http') ? value : ''
-        }
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-      />
-
-      <div className="text-center text-xs text-gray-500">or</div>
-
-      {/* File Upload Area */}
-      <div
-        className={`relative border-2 border-dashed rounded-lg p-4 transition-colors ${
-          // eslint-disable-next-line no-nested-ternary
-          dragOver
-            ? 'border-blue-500 bg-blue-50'
-            : value && !value.startsWith('http')
-            ? 'border-green-500 bg-green-50'
-            : 'border-gray-300 bg-gray-50'
-        }`}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-      >
-        <input
-          ref={fileInputRef}
-          id={inputId}
-          type="file"
-          accept={accept}
-          onChange={handleFileInputChange}
-          disabled={disabled}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-        />
-
-        {value && !value.startsWith('http') ? (
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <Image className="h-8 w-8 text-green-600" />
+    <div className="bg-white">
+      <div>
+        {value instanceof File ? (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <h3 className="text-sm font-medium text-gray-700">
+                  {label}
+                  {required && <span className="text-red-500 ml-0.5">*</span>}
+                </h3>
+              </div>
+              <button
+                onClick={() => onChange('')}
+                className="text-xs text-gray-500 hover:text-red-500"
+                disabled={disabled}
+                type="button"
+              >
+                Remove
+              </button>
             </div>
-            <p className="text-sm font-medium text-green-800">File selected</p>
-            <button
-              type="button"
-              onClick={clearFile}
-              className="mt-2 text-xs text-red-600 hover:text-red-800 flex items-center justify-center gap-1 mx-auto"
-            >
-              <X className="h-3 w-3" />
-              Remove
-            </button>
+
+            {/* Show preview if available */}
+            {previewUrl && (
+              <div className="mb-3">
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="w-full h-auto rounded-lg border border-gray-200"
+                  style={{
+                    maxHeight: '200px',
+                    objectFit: 'contain',
+                  }}
+                />
+              </div>
+            )}
+
+            <div className="flex items-center px-2 gap-3 bg-gray-50 rounded-lg italic">
+              <Upload className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-600 truncate">
+                {value.name}
+              </span>
+            </div>
           </div>
         ) : (
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <Upload className="h-8 w-8 text-gray-400" />
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <h3 className="text-sm font-medium text-gray-700">
+                {label}
+                {required && <span className="text-red-500 ml-0.5">*</span>}
+              </h3>
             </div>
-            <p className="text-sm font-medium text-gray-600">
-              Drop file here or click to browse
-            </p>
-            <p className="text-xs text-gray-500 mt-1">Supports {accept}</p>
+
+            <label
+              className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg transition-colors ${
+                disabled
+                  ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
+                  : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer'
+              }`}
+            >
+              <Upload className="w-5 h-5 text-gray-400" />
+              <span className="text-sm text-gray-600">{placeholder}</span>
+              <input
+                type="file"
+                accept={accept}
+                onChange={handleImageUpload}
+                className="hidden"
+                disabled={disabled}
+              />
+            </label>
+
+            {(generatedImage || lastGeneratedImage) && (
+              <div className="flex justify-center">
+                <button
+                  onClick={handleAddGeneratedImage}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  disabled={disabled}
+                  type="button"
+                >
+                  Add generated image
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

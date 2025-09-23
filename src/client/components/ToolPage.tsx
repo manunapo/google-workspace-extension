@@ -5,6 +5,7 @@ import { Tool } from '../../config';
 import ParameterRenderer from './ParameterRenderer';
 import { Button } from './ui/button';
 import Spinner from './ui/spinner';
+import GeneratedImageDisplay from './GeneratedImageDisplay';
 import { useUserCredits } from '../hooks/useUserCredits';
 import { useToast } from '../hooks/useToast';
 
@@ -12,6 +13,8 @@ interface ToolPageProps {
   tool: Tool;
   onExecute: (toolId: string, parameters: Record<string, any>) => Promise<void>;
   isExecuting: boolean;
+  generatedImage?: string | null;
+  lastGeneratedImage?: string | null;
 }
 
 // Helper function to flatten nested parameter structure
@@ -68,6 +71,8 @@ const ToolPage: React.FC<ToolPageProps> = ({
   tool,
   onExecute,
   isExecuting,
+  generatedImage,
+  lastGeneratedImage,
 }) => {
   const { hasEnoughCredits, getCreditsDisplay } = useUserCredits();
   const { showError } = useToast();
@@ -167,14 +172,13 @@ const ToolPage: React.FC<ToolPageProps> = ({
   return (
     <div className="h-full flex flex-col">
       {/* Tool Info */}
-      <div className="flex flex-col gap-2 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-blue-500" />
-          <div className="text-xs w-full text-slate-600 wrap">
-            {tool.description}.
-          </div>
-        </div>
+      <div className="flex flex-col gap-2 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
         <div className="relative w-full h-32 overflow-hidden rounded-md bg-gradient-to-r from-purple-50 to-blue-50">
+          <div className="absolute bottom-0 left-0 w-full flex items-center gap-2 bg-white/80 p-1">
+            <div className="text-xs w-full italic font-medium text-slate-600 wrap">
+              {tool.description}.
+            </div>
+          </div>
           <img
             src={tool.thumbnail}
             alt={`${tool.name} thumbnail`}
@@ -209,13 +213,16 @@ const ToolPage: React.FC<ToolPageProps> = ({
               value={formData[key]}
               onChange={(value) => handleParameterChange(key, value)}
               disabled={isExecuting}
+              toolId={tool.id}
+              generatedImage={generatedImage}
+              lastGeneratedImage={lastGeneratedImage}
             />
           ))
         )}
       </div>
 
       {/* Action Button */}
-      <div className="p-4 bg-white border-t border-gray-200">
+      <div className="py-2 px-4 bg-white border-t border-gray-200">
         <Button
           onClick={handleExecute}
           disabled={
@@ -232,7 +239,7 @@ const ToolPage: React.FC<ToolPageProps> = ({
             <div className="flex items-center gap-2 text-white">
               <Sparkles className="w-5 h-5" />
               <div className="flex items-center gap-0.5 ">
-                <span>Edit</span>
+                <span>{tool.labelActionButton}</span>
                 <span>({tool.credits} </span>
                 <Coins className="h-4 w-4" />
                 <span>)</span>
@@ -246,6 +253,13 @@ const ToolPage: React.FC<ToolPageProps> = ({
             Insufficient credits. You have {getCreditsDisplay()}, but need{' '}
             {tool.credits}.
           </p>
+        )}
+
+        {/* Generated Image Display */}
+        {(generatedImage || lastGeneratedImage) && (
+          <GeneratedImageDisplay
+            imageData={generatedImage || lastGeneratedImage!}
+          />
         )}
       </div>
     </div>
