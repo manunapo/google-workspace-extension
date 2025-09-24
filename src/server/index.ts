@@ -1,5 +1,4 @@
 import {
-  generateImage,
   getUserCredits,
   insertImageToTarget,
   executeTool,
@@ -22,7 +21,6 @@ export {
   onInstall,
   openSidebar,
   openAboutUsDialog,
-  generateImage,
   getUserEmail,
   insertImageToTarget,
   getUserCredits,

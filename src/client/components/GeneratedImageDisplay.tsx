@@ -17,18 +17,31 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
   const { showSuccess, showError } = useToast();
   const [isInserting, setIsInserting] = React.useState(false);
 
+  // Utility function to get file extension from MIME type
+  const getFileExtension = (dataUrl: string): string => {
+    if (dataUrl.startsWith('data:image/gif')) return 'gif';
+    if (dataUrl.startsWith('data:image/png')) return 'png';
+    if (dataUrl.startsWith('data:image/jpeg')) return 'jpg';
+    if (dataUrl.startsWith('data:image/webp')) return 'webp';
+    return 'png'; // default fallback
+  };
+
   const handleDownload = () => {
     try {
-      // Create a temporary link element
+      const fileExtension = getFileExtension(imageData);
+
+      // Create a temporary link element with the base64 data
       const link = document.createElement('a');
       link.href = imageData;
-      link.download = `ai-generated-image-${Date.now()}.png`;
+      link.download = `ai-generated-image-${Date.now()}.${fileExtension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       showSuccess('Image downloaded successfully!');
     } catch (error) {
-      showError('Failed to download image');
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to download image';
+      showError(errorMessage);
     }
   };
 
@@ -53,7 +66,13 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
   return (
     <div className={`bg-white overflow-hidden ${className}`}>
       {/* Image Display */}
-      <div className="">
+      <div className="border-t border-gray-200 p-2">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <h3 className="text-sm font-medium text-gray-700">
+            Last Generated Image
+          </h3>
+        </div>
         <div className="relative group">
           <img
             src={imageData}
@@ -97,9 +116,8 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
             <div className="text-xs text-blue-700">
               <p className="font-medium mb-1">Pro tip:</p>
               <p>
-                Use the Edit tab to resize, change the format, or tweak other
-                aspects of your image. Bonus: You can use the Edit tab with any
-                image!
+                Once you have a generated image, use the shortcut "Add generated
+                image" to add it as source for any tool!
               </p>
             </div>
           </div>

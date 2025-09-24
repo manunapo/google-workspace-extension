@@ -45,6 +45,12 @@ const hasTransparency = (imageData: string): boolean => {
 export const resizeImageForSheets = (imageData: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     try {
+      // Check if it's a GIF - handle differently to preserve animation
+      if (imageData.startsWith('data:image/gif')) {
+        resolve(imageData);
+        return;
+      }
+
       // Create canvas and image elements
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');

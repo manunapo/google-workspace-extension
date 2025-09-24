@@ -1,8 +1,10 @@
 import { MAGIC_HOUR_API_KEY } from '../../constants';
-import { getUserProperties } from '../properties';
+import { getScriptProperties } from '../properties';
+import { convertUrlToBase64 } from '../utils';
 
 const MAGIC_HOUR_BASE_URL = 'https://api.magichour.ai';
-
+const MAGIC_HOUR_CLIENT_ERROR_MSG =
+  'There was an issue generating the image. Please try again.';
 interface MagicHourResponse {
   id: string;
   credits_charged: number;
@@ -150,6 +152,13 @@ export const MAGIC_HOUR_TOOLS = {
             'We recommend omitting the prompt unless you want to customize your headshot.',
         },
       },
+      name: {
+        type: 'string',
+        required: false,
+        label: 'Name',
+        placeholder: 'Enter a name for the headshot',
+        display: false,
+      },
     },
   },
   'ai-meme-generator': {
@@ -277,11 +286,9 @@ export const MAGIC_HOUR_TOOLS = {
  * Get Magic Hour API key from user properties
  */
 function getApiKey(): string {
-  const apiKey = getUserProperties(MAGIC_HOUR_API_KEY);
+  const apiKey = getScriptProperties(MAGIC_HOUR_API_KEY);
   if (!apiKey) {
-    throw new Error(
-      'Magic Hour API key not found in user properties. Please set your API key first.'
-    );
+    throw new Error(MAGIC_HOUR_CLIENT_ERROR_MSG);
   }
   return apiKey;
 }
@@ -317,7 +324,8 @@ function makeApiRequest(
     } catch {
       errorMessage += `: ${responseText}`;
     }
-    throw new Error(errorMessage);
+    console.log(errorMessage);
+    throw new Error(MAGIC_HOUR_CLIENT_ERROR_MSG);
   }
 
   return JSON.parse(responseText);
@@ -343,7 +351,8 @@ export function checkProjectStatus(projectId: string): MagicHourProjectStatus {
   const responseText = response.getContentText();
 
   if (responseCode !== 200) {
-    throw new Error(`Failed to check project status: ${responseText}`);
+    console.log(`Failed to check project status: ${responseText}`);
+    throw new Error(MAGIC_HOUR_CLIENT_ERROR_MSG);
   }
 
   return JSON.parse(responseText);
@@ -352,193 +361,62 @@ export function checkProjectStatus(projectId: string): MagicHourProjectStatus {
 /**
  * AI Image Generator - Create AI images with various styles and tools
  */
-export function generateAIImage(params: {
-  prompt: string;
-  imageCount?: number;
-  orientation?: 'square' | 'landscape' | 'portrait';
-  tool?: keyof typeof AI_IMAGE_TOOLS;
-  name?: string;
-}): MagicHourResponse {
-  const payload = {
-    name: params.name || 'AI Generated Image',
-    image_count: params.imageCount || 1,
-    orientation: params.orientation || 'landscape',
-    style: {
-      prompt: params.prompt,
-      ...(params.tool && { tool: params.tool }),
-    },
-  };
-
-  return makeApiRequest('/v1/ai-image-generator', payload);
+export function generateAIImage(
+  params: Record<string, unknown>
+): MagicHourResponse {
+  return makeApiRequest('/v1/ai-image-generator', params);
 }
 
 /**
  * AI GIF Creator - Create animated GIFs from text prompts
  */
-export function generateAIGif(params: {
-  prompt: string;
-  name?: string;
-}): MagicHourResponse {
-  const payload = {
-    name: params.name || 'AI Generated GIF',
-    style: {
-      prompt: params.prompt,
-    },
-    output_format: 'gif',
-  };
-
-  return makeApiRequest('/v1/ai-gif-generator', payload);
+export function generateAIGif(
+  params: Record<string, unknown>
+): MagicHourResponse {
+  return makeApiRequest('/v1/ai-gif-generator', params);
 }
 
 /**
  * AI Headshot Generator - Generate professional headshots from selfies
  */
-export function generateAIHeadshot(params: {
-  imageUrl: string;
-  prompt?: string;
-  name?: string;
-}): MagicHourResponse {
-  const payload = {
-    name: params.name || 'AI Generated Headshot',
-    style: {
-      ...(params.prompt && { prompt: params.prompt }),
-    },
-    assets: {
-      image_file_path: params.imageUrl,
-    },
-  };
-
-  return makeApiRequest('/v1/ai-headshot-generator', payload);
+export function generateAIHeadshot(
+  params: Record<string, unknown>
+): MagicHourResponse {
+  return makeApiRequest('/v1/ai-headshot-generator', params);
 }
 
 /**
  * AI Meme Generator - Generate memes with AI
  */
-export function generateAIMeme(params: {
-  topic: string;
-  template?: string;
-  searchWeb?: boolean;
-  name?: string;
-}): MagicHourResponse {
-  const payload = {
-    name: params.name || 'AI Generated Meme',
-    style: {
-      topic: params.topic,
-      ...(params.template && { template: params.template }),
-      searchWeb: params.searchWeb || false,
-    },
-  };
-
-  return makeApiRequest('/v1/ai-meme-generator', payload);
+export function generateAIMeme(
+  params: Record<string, unknown>
+): MagicHourResponse {
+  return makeApiRequest('/v1/ai-meme-generator', params);
 }
 
 /**
  * Image Background Remover - Remove or replace image backgrounds
  */
-export function removeImageBackground(params: {
-  imageUrl: string;
-  backgroundImageUrl?: string;
-  name?: string;
-}): MagicHourResponse {
-  const payload = {
-    name: params.name || 'Background Removed Image',
-    assets: {
-      image_file_path: params.imageUrl,
-      ...(params.backgroundImageUrl && {
-        background_image_file_path: params.backgroundImageUrl,
-      }),
-    },
-  };
-
-  return makeApiRequest('/v1/image-background-remover', payload);
+export function removeImageBackground(
+  params: Record<string, unknown>
+): MagicHourResponse {
+  return makeApiRequest('/v1/image-background-remover', params);
 }
 
 /**
  * Face Swap Photo - Swap faces in photos
  */
-export function swapFaces(params: {
-  targetImageUrl: string;
-  sourceImageUrl?: string;
-  faceSwapMode?: 'all-faces' | 'individual-faces';
-  faceMappings?: Array<{ original_face: string; new_face: string }>;
-  name?: string;
-}): MagicHourResponse {
-  const payload = {
-    name: params.name || 'Face Swap Photo',
-    assets: {
-      face_swap_mode: params.faceSwapMode || 'all-faces',
-      target_file_path: params.targetImageUrl,
-      ...(params.sourceImageUrl && { source_file_path: params.sourceImageUrl }),
-      ...(params.faceMappings && { face_mappings: params.faceMappings }),
-    },
-  };
-
-  return makeApiRequest('/v1/face-swap-photo', payload);
+export function swapFaces(params: Record<string, unknown>): MagicHourResponse {
+  return makeApiRequest('/v1/face-swap-photo', params);
 }
 
 /**
  * AI Clothes Changer - Change outfits in photos
  */
-export function changeClothes(params: {
-  personImageUrl: string;
-  garmentImageUrl: string;
-  garmentType: 'upper_body' | 'lower_body' | 'full_body';
-  name?: string;
-}): MagicHourResponse {
-  const payload = {
-    name: params.name || 'Clothes Changed Photo',
-    assets: {
-      person_file_path: params.personImageUrl,
-      garment_file_path: params.garmentImageUrl,
-      garment_type: params.garmentType,
-    },
-  };
-
-  return makeApiRequest('/v1/ai-clothes-changer', payload);
-}
-
-/**
- * Main entry point - Route requests to appropriate Magic Hour tool
- */
-export function processWithMagicHour(
-  params: {
-    tool: keyof typeof MAGIC_HOUR_TOOLS;
-  } & Record<string, unknown>
+export function changeClothes(
+  params: Record<string, unknown>
 ): MagicHourResponse {
-  const { tool, ...toolParams } = params;
-
-  if (!MAGIC_HOUR_TOOLS[tool]) {
-    throw new Error(
-      `Unsupported Magic Hour tool: ${tool}. Available tools: ${Object.keys(
-        MAGIC_HOUR_TOOLS
-      ).join(', ')}`
-    );
-  }
-
-  switch (tool) {
-    case 'ai-image-generator':
-      return generateAIImage(
-        toolParams as Parameters<typeof generateAIImage>[0]
-      );
-    case 'ai-gif-creator':
-      return generateAIGif(toolParams as Parameters<typeof generateAIGif>[0]);
-    case 'ai-headshot-generator':
-      return generateAIHeadshot(
-        toolParams as Parameters<typeof generateAIHeadshot>[0]
-      );
-    case 'ai-meme-generator':
-      return generateAIMeme(toolParams as Parameters<typeof generateAIMeme>[0]);
-    case 'image-background-remover':
-      return removeImageBackground(
-        toolParams as Parameters<typeof removeImageBackground>[0]
-      );
-    case 'face-swap-photo':
-      return swapFaces(toolParams as Parameters<typeof swapFaces>[0]);
-    case 'ai-clothes-changer':
-      return changeClothes(toolParams as Parameters<typeof changeClothes>[0]);
-    default:
-      throw new Error(`Tool implementation not found: ${tool}`);
-  }
+  return makeApiRequest('/v1/ai-clothes-changer', params);
 }
 
 /**
@@ -546,7 +424,7 @@ export function processWithMagicHour(
  */
 export function waitForCompletion(
   projectId: string,
-  maxWaitTime = 300000,
+  maxWaitTime = 40000, // 60 seconds
   pollInterval = 1000
 ): MagicHourProjectStatus {
   const startTime = Date.now();
@@ -560,22 +438,112 @@ export function waitForCompletion(
 
     if (status.status === 'error') {
       const errorMessage = status.error as { message?: string } | null;
-      throw new Error(
+      console.log(
         `Magic Hour project failed: ${errorMessage?.message || 'Unknown error'}`
       );
+      throw new Error(MAGIC_HOUR_CLIENT_ERROR_MSG);
     }
 
     if (status.status === 'canceled') {
-      throw new Error('Magic Hour project was canceled');
+      console.log('Magic Hour project was canceled');
+      throw new Error(MAGIC_HOUR_CLIENT_ERROR_MSG);
     }
 
     // Wait before polling again
     Utilities.sleep(pollInterval);
   }
 
-  throw new Error(
+  console.error(
     `Magic Hour project timed out after ${maxWaitTime / 1000} seconds`
   );
+  throw new Error(MAGIC_HOUR_CLIENT_ERROR_MSG);
+}
+
+/**
+ * Extract download URL from completed Magic Hour project
+ */
+function extractDownloadUrl(status: MagicHourProjectStatus): string {
+  if (status.status !== 'complete') {
+    console.log(`Project not complete. Status: ${status.status}`);
+    throw new Error(MAGIC_HOUR_CLIENT_ERROR_MSG);
+  }
+
+  if (!status.downloads || status.downloads.length === 0) {
+    console.log('No download URLs available for completed project');
+    throw new Error(MAGIC_HOUR_CLIENT_ERROR_MSG);
+  }
+
+  // Return the first available download URL
+  return status.downloads[0].url;
+}
+
+/**
+ * Main entry point - Route requests to appropriate Magic Hour tool
+ * Automatically waits for completion and returns the base64 data URL
+ */
+export function processWithMagicHour(
+  params: {
+    tool: keyof typeof MAGIC_HOUR_TOOLS;
+  } & Record<string, unknown>
+): string {
+  const { tool, ...toolParams } = params;
+
+  if (!MAGIC_HOUR_TOOLS[tool]) {
+    console.log(
+      `Unsupported Magic Hour tool: ${tool}. Available tools: ${Object.keys(
+        MAGIC_HOUR_TOOLS
+      ).join(', ')}`
+    );
+    throw new Error(MAGIC_HOUR_CLIENT_ERROR_MSG);
+  }
+
+  let response: MagicHourResponse;
+
+  switch (tool) {
+    case 'ai-image-generator':
+      response = generateAIImage(
+        toolParams as Parameters<typeof generateAIImage>[0]
+      );
+      break;
+    case 'ai-gif-creator':
+      response = generateAIGif(
+        toolParams as Parameters<typeof generateAIGif>[0]
+      );
+      break;
+    case 'ai-headshot-generator':
+      response = generateAIHeadshot(
+        toolParams as Parameters<typeof generateAIHeadshot>[0]
+      );
+      break;
+    case 'ai-meme-generator':
+      response = generateAIMeme(
+        toolParams as Parameters<typeof generateAIMeme>[0]
+      );
+      break;
+    case 'image-background-remover':
+      response = removeImageBackground(
+        toolParams as Parameters<typeof removeImageBackground>[0]
+      );
+      break;
+    case 'face-swap-photo':
+      response = swapFaces(toolParams as Parameters<typeof swapFaces>[0]);
+      break;
+    case 'ai-clothes-changer':
+      response = changeClothes(
+        toolParams as Parameters<typeof changeClothes>[0]
+      );
+      break;
+    default:
+      console.log(`Tool implementation not found: ${tool}`);
+      throw new Error(MAGIC_HOUR_CLIENT_ERROR_MSG);
+  }
+
+  // Wait for completion, get the download URL, and convert to base64
+  const completedStatus = waitForCompletion(response.id);
+  const downloadUrl = extractDownloadUrl(completedStatus);
+
+  // Convert the Magic Hour URL to base64 before returning to client
+  return convertUrlToBase64(downloadUrl, MAGIC_HOUR_CLIENT_ERROR_MSG);
 }
 
 /**

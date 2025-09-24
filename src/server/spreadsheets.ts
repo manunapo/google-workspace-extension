@@ -1,3 +1,5 @@
+import { getImageInfo } from './utils';
+
 // Insert image into the current spreadsheet at the active cell
 export const insertImageToSheet = (imageData: string): void => {
   try {
@@ -5,12 +7,13 @@ export const insertImageToSheet = (imageData: string): void => {
     const sheet = spreadsheet.getActiveSheet();
     const activeRange = sheet.getActiveRange();
 
-    // Convert base64 data URL to blob
+    // Extract image info and convert base64 data URL to blob
+    const imageInfo = getImageInfo(imageData);
     const base64Data = imageData.split(',')[1]; // Remove data:image/...;base64, part
     const blob = Utilities.newBlob(
       Utilities.base64Decode(base64Data),
-      'image/png',
-      'generated-image.png'
+      imageInfo.mimeType,
+      `generated-image.${imageInfo.extension}`
     );
 
     // Check if blob is too large for Google Sheets

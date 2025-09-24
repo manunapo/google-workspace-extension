@@ -85,13 +85,11 @@ const App: React.FC = () => {
           throw new Error(`Tool ${toolId} not found`);
         }
 
-        console.log('parameters', parameters);
         // Process all image parameters in one pass
         const processedParameters = await processImageParameters(
           tool.parameters,
           parameters
         );
-        console.log('processedParameters', processedParameters);
 
         // Call the unified tool executor
         const result = await serverFunctions.executeTool(

@@ -310,6 +310,13 @@ const geminiImageEditorTool: Tool = {
   description: 'Edit and transform images using AI',
   credits: 50,
   parameters: {
+    name: {
+      type: 'string',
+      required: false,
+      label: 'Name',
+      placeholder: 'Enter a name for the image',
+      display: false,
+    },
     referenceImage: {
       type: 'image_b64',
       required: true,
