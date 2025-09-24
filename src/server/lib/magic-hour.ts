@@ -135,10 +135,10 @@ export const MAGIC_HOUR_TOOLS = {
     parameters: {
       assets: {
         image_file_path: {
-          type: 'string',
+          type: 'image_url',
           required: true,
           label: 'Source Photo',
-          placeholder: 'Upload your photo or enter image URL',
+          placeholder: 'Upload your photo',
         },
       },
       style: {
@@ -200,13 +200,13 @@ export const MAGIC_HOUR_TOOLS = {
     parameters: {
       assets: {
         image_file_path: {
-          type: 'string',
+          type: 'image_url',
           required: true,
           label: 'Source Image',
-          placeholder: 'Upload image or enter URL',
+          placeholder: 'Upload the original image',
         },
         background_image_file_path: {
-          type: 'string',
+          type: 'image_url',
           required: false,
           label: 'New Background (Optional)',
           placeholder:
@@ -222,13 +222,13 @@ export const MAGIC_HOUR_TOOLS = {
     parameters: {
       assets: {
         target_file_path: {
-          type: 'string',
+          type: 'image_url',
           required: true,
           label: 'Target Photo',
           placeholder: 'Upload photo where face will be swapped',
         },
         source_file_path: {
-          type: 'string',
+          type: 'image_url',
           required: false,
           label: 'Source Face (Optional)',
           placeholder: 'Upload photo with face to copy from',
@@ -250,13 +250,13 @@ export const MAGIC_HOUR_TOOLS = {
     parameters: {
       assets: {
         person_file_path: {
-          type: 'string',
+          type: 'image_url',
           required: true,
           label: 'Person Photo',
           placeholder: 'Upload photo of person to change clothes',
         },
         garment_file_path: {
-          type: 'string',
+          type: 'image_url',
           required: true,
           label: 'Clothing Item',
           placeholder: 'Upload photo of clothing to apply',

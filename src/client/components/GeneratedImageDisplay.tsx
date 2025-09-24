@@ -3,7 +3,7 @@ import { Download, FileImage, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
 import { serverFunctions } from '../utils/serverFunctions';
 import { useToast } from '../hooks/useToast';
-import { resizeImageForSheets } from '../utils/imageResizer';
+import { resizeImageForSheets } from '../utils/images';
 
 interface GeneratedImageDisplayProps {
   imageData: string;
@@ -53,7 +53,7 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
   return (
     <div className={`bg-white overflow-hidden ${className}`}>
       {/* Image Display */}
-      <div className="p-4">
+      <div className="">
         <div className="relative group">
           <img
             src={imageData}

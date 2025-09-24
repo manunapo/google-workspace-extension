@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Upload } from 'lucide-react';
+import { base64ToFile } from '../../utils/images';
 
 interface FileParameterProps {
   label: string;
@@ -12,20 +13,6 @@ interface FileParameterProps {
   generatedImage?: string | null;
   lastGeneratedImage?: string | null;
 }
-
-// Utility function to convert base64 to File
-const base64ToFile = (base64: string, filename: string): File => {
-  const arr = base64.split(',');
-  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while (n > 0) {
-    n -= 1;
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  return new File([u8arr], filename, { type: mime });
-};
 
 const FileParameter: React.FC<FileParameterProps> = ({
   label,
@@ -72,9 +59,8 @@ const FileParameter: React.FC<FileParameterProps> = ({
           `generated-image-${timestamp}.png`
         );
         onChange(file);
-      } catch (error) {
-        console.error('Failed to load generated image:', error);
-      }
+        // eslint-disable-next-line no-empty
+      } catch (error) {}
     }
   };
 

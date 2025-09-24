@@ -9,6 +9,7 @@ import { availableTools } from '../../config';
 import { useToast } from '../hooks/useToast';
 import { useUserCredits } from '../hooks/useUserCredits';
 import { serverFunctions } from '../utils/serverFunctions';
+import { processImageParameters } from '../utils/images';
 
 // Types for the app state
 type AppPage = 'tool' | 'profile';
@@ -39,11 +40,6 @@ const App: React.FC = () => {
   const [lastGeneratedImage, setLastGeneratedImage] = React.useState<
     string | null
   >(null);
-
-  // Initialize credits on mount
-  React.useEffect(() => {
-    refreshCredits();
-  }, [refreshCredits]);
 
   // Handle navigation actions
   const navigateToTool = React.useCallback((tool: Tool) => {
@@ -89,25 +85,20 @@ const App: React.FC = () => {
           throw new Error(`Tool ${toolId} not found`);
         }
 
-        console.log('Executing tool:', toolId, 'with parameters:', parameters);
-        // TODO: Move this logic to the file loader component
-        // refresh credits after executeTool
-        // fix generated photo appearing below the CTA BUtton
-        let imageData = null;
-        if (parameters.referenceImage) {
-          const reader = new FileReader();
-          imageData = await new Promise((resolve) => {
-            reader.onload = (e) => resolve(e.target?.result);
-            reader.readAsDataURL(parameters.referenceImage as File);
-          });
-        }
-        // Call the unified tool executor
-        const result = await serverFunctions.executeTool(toolId, tool.credits, {
-          ...parameters,
-          referenceImage: imageData,
-        });
+        console.log('parameters', parameters);
+        // Process all image parameters in one pass
+        const processedParameters = await processImageParameters(
+          tool.parameters,
+          parameters
+        );
+        console.log('processedParameters', processedParameters);
 
-        console.log('Tool execution result:', result);
+        // Call the unified tool executor
+        const result = await serverFunctions.executeTool(
+          toolId,
+          tool.credits,
+          processedParameters
+        );
 
         // Update generated image state if result is an image
         if (result && typeof result === 'string') {
@@ -195,18 +186,6 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Loading overlay during execution */}
-      {state.isExecuting && (
-        <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="flex items-center space-x-3">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-              <span className="text-gray-700">Processing your request...</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

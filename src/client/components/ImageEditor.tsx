@@ -14,7 +14,7 @@ import { useImageEdition } from '../hooks/useImageEdition';
 import { Button } from './ui/button';
 import { serverFunctions } from '../utils/serverFunctions';
 import { useToast } from '../hooks/useToast';
-import { resizeImageForSheets } from '../utils/imageResizer';
+import { resizeImageForSheets } from '../utils/images';
 
 interface ImageEditorProps {
   selectedImage: File | null;

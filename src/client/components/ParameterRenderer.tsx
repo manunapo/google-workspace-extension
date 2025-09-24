@@ -58,7 +58,8 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
   const placeholder = config.placeholder || `Enter ${label.toLowerCase()}...`;
 
   switch (config.type) {
-    case 'file':
+    case 'image_url':
+    case 'image_b64':
       // Explicit file parameter type
       return (
         <FileParameter
@@ -75,29 +76,6 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
       );
 
     case 'string':
-      // Check if it's a file path parameter (fallback for Magic Hour tools)
-      if (
-        parameterKey.includes('file_path') ||
-        parameterKey.includes('image') ||
-        parameterKey.includes('Image') ||
-        parameterKey.toLowerCase().includes('photo') ||
-        parameterKey.toLowerCase().includes('upload')
-      ) {
-        return (
-          <FileParameter
-            label={label}
-            value={value || ''}
-            onChange={onChange}
-            required={config.required}
-            disabled={disabled}
-            accept="image/*"
-            placeholder={placeholder}
-            generatedImage={generatedImage}
-            lastGeneratedImage={lastGeneratedImage}
-          />
-        );
-      }
-
       // Check if it should be multiline (prompts, topics, etc.)
       const isMultiline =
         parameterKey.includes('prompt') || parameterKey.includes('topic');

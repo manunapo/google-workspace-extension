@@ -311,7 +311,7 @@ const geminiImageEditorTool: Tool = {
   credits: 50,
   parameters: {
     referenceImage: {
-      type: 'file',
+      type: 'image_b64',
       required: true,
       label: 'Source Image',
       placeholder: 'Upload image to edit',

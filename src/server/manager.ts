@@ -10,12 +10,15 @@ import {
   swapFaces,
   changeClothes,
 } from './lib/magic-hour';
-import { uploadImageAndGetUrl } from './lib/cloudinary';
 import { deductDbUserCredits, getOrCreateDbUser, User } from './lib/supabase';
 import { insertImageToSlide } from './slides';
 import getUserEmail from './session';
 import { insertImageToSheet } from './spreadsheets';
 import { getScriptContext } from './ui';
+import {
+  CloudinaryUploadOptions,
+  uploadImageToCloudinary,
+} from './lib/cloudinary';
 
 /**
  * Higher-order function that wraps a function with user ID authentication
@@ -42,56 +45,6 @@ export const getUserCredits = withUserIdAuth(
   }
 );
 
-// Helper function to convert File objects to appropriate format
-async function processFileParameters(
-  parameters: Record<string, unknown>,
-  toolRequiresUrls = true
-): Promise<Record<string, unknown>> {
-  const processed: Record<string, unknown> = {};
-
-  const keys = Object.keys(parameters);
-  const promises = keys.map(async (key) => {
-    const value = parameters[key];
-    if (value instanceof File) {
-      if (toolRequiresUrls) {
-        // Upload to Cloudinary and use URL (for Magic Hour tools)
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(value);
-        });
-        const url = await uploadImageAndGetUrl(base64);
-        return { key, value: url };
-      }
-      // Convert to base64 (for Gemini tools)
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(value);
-      });
-      return { key, value: base64 };
-    }
-    if (typeof value === 'object' && value !== null) {
-      // Recursively process nested objects
-      const processedValue = await processFileParameters(
-        value as Record<string, unknown>,
-        toolRequiresUrls
-      );
-      return { key, value: processedValue };
-    }
-    return { key, value };
-  });
-
-  const results = await Promise.all(promises);
-  results.forEach(({ key, value }) => {
-    processed[key] = value;
-  });
-
-  return processed;
-}
-
 // Gemini Image Editor execution function
 async function executeGeminiImageEditor(
   parameters: Record<string, unknown>
@@ -107,15 +60,11 @@ async function executeGeminiImageEditor(
 async function executeAIImageGenerator(
   parameters: Record<string, unknown>
 ): Promise<string> {
-  const processedParams = await processFileParameters(parameters, true);
-  const style = (processedParams.style as Record<string, unknown>) || {};
+  const style = (parameters.style as Record<string, unknown>) || {};
   const result = await generateAIImage({
     prompt: style.prompt as string,
-    imageCount: processedParams.image_count as number,
-    orientation: processedParams.orientation as
-      | 'square'
-      | 'landscape'
-      | 'portrait',
+    imageCount: parameters.image_count as number,
+    orientation: parameters.orientation as 'square' | 'landscape' | 'portrait',
     tool: style.tool as keyof typeof import('./lib/magic-hour').AI_IMAGE_TOOLS,
   });
   return result.id;
@@ -124,8 +73,7 @@ async function executeAIImageGenerator(
 async function executeAIGifCreator(
   parameters: Record<string, unknown>
 ): Promise<string> {
-  const processedParams = await processFileParameters(parameters, true);
-  const style = (processedParams.style as Record<string, unknown>) || {};
+  const style = (parameters.style as Record<string, unknown>) || {};
   const result = await generateAIGif({
     prompt: style.prompt as string,
   });
@@ -135,9 +83,8 @@ async function executeAIGifCreator(
 async function executeAIHeadshotGenerator(
   parameters: Record<string, unknown>
 ): Promise<string> {
-  const processedParams = await processFileParameters(parameters, true);
-  const style = (processedParams.style as Record<string, unknown>) || {};
-  const assets = (processedParams.assets as Record<string, unknown>) || {};
+  const style = (parameters.style as Record<string, unknown>) || {};
+  const assets = (parameters.assets as Record<string, unknown>) || {};
   const result = await generateAIHeadshot({
     imageUrl: assets.image_file_path as string,
     prompt: style.prompt as string,
@@ -148,8 +95,7 @@ async function executeAIHeadshotGenerator(
 async function executeAIMemeGenerator(
   parameters: Record<string, unknown>
 ): Promise<string> {
-  const processedParams = await processFileParameters(parameters, true);
-  const style = (processedParams.style as Record<string, unknown>) || {};
+  const style = (parameters.style as Record<string, unknown>) || {};
   const result = await generateAIMeme({
     topic: style.topic as string,
     template: style.template as string,
@@ -161,8 +107,7 @@ async function executeAIMemeGenerator(
 async function executeImageBackgroundRemover(
   parameters: Record<string, unknown>
 ): Promise<string> {
-  const processedParams = await processFileParameters(parameters, true);
-  const assets = (processedParams.assets as Record<string, unknown>) || {};
+  const assets = (parameters.assets as Record<string, unknown>) || {};
   const result = await removeImageBackground({
     imageUrl: assets.image_file_path as string,
     backgroundImageUrl: assets.background_image_file_path as string,
@@ -173,8 +118,7 @@ async function executeImageBackgroundRemover(
 async function executeFaceSwapPhoto(
   parameters: Record<string, unknown>
 ): Promise<string> {
-  const processedParams = await processFileParameters(parameters, true);
-  const assets = (processedParams.assets as Record<string, unknown>) || {};
+  const assets = (parameters.assets as Record<string, unknown>) || {};
   const result = await swapFaces({
     targetImageUrl: assets.target_file_path as string,
     sourceImageUrl: assets.source_file_path as string,
@@ -186,8 +130,7 @@ async function executeFaceSwapPhoto(
 async function executeAIClothesChanger(
   parameters: Record<string, unknown>
 ): Promise<string> {
-  const processedParams = await processFileParameters(parameters, true);
-  const assets = (processedParams.assets as Record<string, unknown>) || {};
+  const assets = (parameters.assets as Record<string, unknown>) || {};
   const result = await changeClothes({
     personImageUrl: assets.person_file_path as string,
     garmentImageUrl: assets.garment_file_path as string,
@@ -336,3 +279,16 @@ export const insertImageToTarget = (imageData: string): void => {
       throw new Error(`Unsupported context: ${context}`);
   }
 };
+
+// Convenience function to upload and get just the URL
+export const uploadImageAndGetUrl = withUserIdAuth(
+  async (
+    email: string,
+    imageData: string,
+    options: CloudinaryUploadOptions = {}
+  ): Promise<string> => {
+    console.log(email);
+    const result = await uploadImageToCloudinary(imageData, options);
+    return result.secure_url;
+  }
+);

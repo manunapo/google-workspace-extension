@@ -219,6 +219,13 @@ const ToolPage: React.FC<ToolPageProps> = ({
             />
           ))
         )}
+
+        {/* Generated Image Display */}
+        {(generatedImage || lastGeneratedImage) && (
+          <GeneratedImageDisplay
+            imageData={generatedImage || lastGeneratedImage!}
+          />
+        )}
       </div>
 
       {/* Action Button */}
@@ -253,13 +260,6 @@ const ToolPage: React.FC<ToolPageProps> = ({
             Insufficient credits. You have {getCreditsDisplay()}, but need{' '}
             {tool.credits}.
           </p>
-        )}
-
-        {/* Generated Image Display */}
-        {(generatedImage || lastGeneratedImage) && (
-          <GeneratedImageDisplay
-            imageData={generatedImage || lastGeneratedImage!}
-          />
         )}
       </div>
     </div>

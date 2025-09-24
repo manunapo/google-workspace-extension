@@ -3,6 +3,7 @@ import {
   getUserCredits,
   insertImageToTarget,
   executeTool,
+  uploadImageAndGetUrl,
 } from './manager';
 import getUserEmail from './session';
 import {
@@ -29,4 +30,5 @@ export {
   authorizeAddon,
   showHelp,
   executeTool,
+  uploadImageAndGetUrl,
 };

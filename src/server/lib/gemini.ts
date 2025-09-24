@@ -118,18 +118,55 @@ export async function generateGeminiImage(
     console.log('Full Gemini API response:', JSON.stringify(data, null, 2));
 
     if (!data.candidates || data.candidates.length === 0) {
-      throw new Error('No image generated from Gemini');
+      throw new Error('No image generated');
     }
 
     const candidate = data.candidates[0];
     console.log('Candidate structure:', JSON.stringify(candidate, null, 2));
+
+    // Check finish reason for specific error conditions
+    const { finishReason } = candidate;
+    if (finishReason) {
+      console.log('Finish reason:', finishReason);
+
+      switch (finishReason) {
+        case 'RECITATION':
+          throw new Error(
+            'Image generation blocked due to potential copyright or trademark content. Please modify your prompt to avoid references to specific brands, characters, or copyrighted material.'
+          );
+        case 'SAFETY':
+          throw new Error(
+            'Content safety violation detected. Please modify your prompt to avoid potentially harmful, offensive, or inappropriate content.'
+          );
+        case 'BLOCKED_REASON_UNSPECIFIED':
+          throw new Error(
+            'Content was blocked for unspecified reasons. Please try rephrasing your prompt.'
+          );
+        case 'FINISH_REASON_UNSPECIFIED':
+          throw new Error(
+            'Image generation stopped for unknown reasons. Please try again with a different prompt.'
+          );
+        case 'MAX_TOKENS':
+          throw new Error(
+            'Response was truncated due to length limits. Please try a shorter or simpler prompt.'
+          );
+        default:
+          if (finishReason !== 'STOP') {
+            throw new Error(
+              `Image generation finished unexpectedly with reason: ${finishReason}. Please try modifying your prompt.`
+            );
+          }
+      }
+    }
 
     if (
       !candidate.content ||
       !candidate.content.parts ||
       candidate.content.parts.length === 0
     ) {
-      throw new Error('No image content received from Gemini');
+      throw new Error(
+        'No content received from Gemini. The model may have blocked the request due to content policies.'
+      );
     }
 
     console.log(
@@ -146,7 +183,23 @@ export async function generateGeminiImage(
     console.log('Found image part:', JSON.stringify(imagePart, null, 2));
 
     if (!imagePart) {
-      throw new Error('No image data received from Gemini');
+      // Check if there's only text content
+      const textParts = candidate.content.parts.filter(
+        (part: { text?: string }) => part.text
+      );
+
+      if (textParts.length > 0) {
+        const textContent = textParts
+          .map((part: { text?: string }) => part.text)
+          .join(' ');
+        throw new Error(
+          `Gemini returned text instead of an image: "${textContent}". This usually means your prompt was blocked due to content policies. Please try a different prompt avoiding copyrighted material, brands, or potentially harmful content.`
+        );
+      }
+
+      throw new Error(
+        "No image data found in the response. The content may have been blocked by Gemini's safety filters. Please try a different prompt."
+      );
     }
 
     // Handle both camelCase (inlineData) and snake_case (inline_data) from API response

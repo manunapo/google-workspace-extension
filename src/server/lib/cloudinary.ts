@@ -6,11 +6,15 @@ import {
   CLOUDINARY_API_SECRET,
 } from '../../constants';
 
+const CLOUDINARY_CLIENT_ERROR_MSG =
+  'There was an issue uploading the image. Please try again.';
+
 export interface CloudinaryUploadOptions {
   folder?: string;
   public_id?: string;
   tags?: string[];
   quality?: string;
+  filename?: string;
 }
 
 export interface CloudinaryUploadResponse {
@@ -38,14 +42,22 @@ function generateSignature(
   params: Record<string, string>,
   apiSecret: string
 ): string {
+  // Create a copy of params and exclude signature and file fields
+  const signatureParams = { ...params };
+  delete signatureParams.signature;
+  delete signatureParams.file;
+  delete signatureParams.api_key; // api_key is not included in signature
+
   // Sort parameters alphabetically
-  const sortedParams = Object.keys(params)
+  const sortedParams = Object.keys(signatureParams)
     .sort()
-    .map((key) => `${key}=${params[key]}`)
+    .map((key) => `${key}=${signatureParams[key]}`)
     .join('&');
 
   // Add API secret
   const stringToSign = `${sortedParams}${apiSecret}`;
+
+  console.log('String to sign:', stringToSign);
 
   // Generate SHA1 hash (using Utilities.computeDigest in Google Apps Script)
   const hash = Utilities.computeDigest(
@@ -63,7 +75,7 @@ function generateSignature(
 }
 
 // Upload image to Cloudinary
-async function uploadImageToCloudinary(
+export async function uploadImageToCloudinary(
   imageData: string,
   options: CloudinaryUploadOptions = {}
 ): Promise<CloudinaryUploadResponse> {
@@ -81,9 +93,10 @@ async function uploadImageToCloudinary(
     );
 
     if (!cloudName || !apiKey || !apiSecret) {
-      throw new Error(
+      console.log(
         'Cloudinary credentials not configured. Please add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET to script properties.'
       );
+      throw new Error(CLOUDINARY_CLIENT_ERROR_MSG);
     }
 
     // Extract base64 data if it's a data URL
@@ -94,32 +107,38 @@ async function uploadImageToCloudinary(
     // Generate timestamp
     const timestamp = Math.floor(Date.now() / 1000).toString();
 
-    // Prepare upload parameters
-    const uploadParams: Record<string, string> = {
+    // Prepare upload parameters (for signature generation)
+    const signatureParams: Record<string, string> = {
       timestamp,
-      api_key: apiKey,
     };
 
-    // Add optional parameters
+    // Add optional parameters for signature
     if (options.folder) {
-      uploadParams.folder = options.folder;
+      signatureParams.folder = options.folder;
     }
     if (options.public_id) {
-      uploadParams.public_id = options.public_id;
+      signatureParams.public_id = options.public_id;
     }
     if (options.tags && options.tags.length > 0) {
-      uploadParams.tags = options.tags.join(',');
+      signatureParams.tags = options.tags.join(',');
     }
     if (options.quality) {
-      uploadParams.quality = options.quality;
+      signatureParams.quality = options.quality;
+    }
+    if (options.filename) {
+      signatureParams.original_filename = options.filename;
     }
 
     // Generate signature
-    const signature = generateSignature(uploadParams, apiSecret);
-    uploadParams.signature = signature;
+    const signature = generateSignature(signatureParams, apiSecret);
 
-    // Add the image file
-    uploadParams.file = `data:image/png;base64,${base64Data}`;
+    // Prepare final upload parameters
+    const uploadParams: Record<string, string> = {
+      ...signatureParams,
+      api_key: apiKey,
+      signature,
+      file: `data:image/png;base64,${base64Data}`,
+    };
 
     // Cloudinary upload endpoint
     const endpoint = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
@@ -151,19 +170,20 @@ async function uploadImageToCloudinary(
 
       // Handle specific Cloudinary errors
       if (responseCode === 401) {
-        throw new Error(
+        console.log(
           'Invalid Cloudinary API credentials. Please check your configuration.'
         );
+        throw new Error(CLOUDINARY_CLIENT_ERROR_MSG);
       } else if (responseCode === 400) {
         const errorData = JSON.parse(responseText);
         if (errorData.error && errorData.error.message) {
-          throw new Error(`Cloudinary error: ${errorData.error.message}`);
+          console.log(`Cloudinary error: ${errorData.error.message}`);
+          throw new Error(CLOUDINARY_CLIENT_ERROR_MSG);
         }
       }
 
-      throw new Error(
-        `Cloudinary API error: ${responseCode} - ${responseText}`
-      );
+      console.log(`Cloudinary API error: ${responseCode} - ${responseText}`);
+      throw new Error(CLOUDINARY_CLIENT_ERROR_MSG);
     }
 
     const uploadResult: CloudinaryUploadResponse = JSON.parse(responseText);
@@ -180,17 +200,6 @@ async function uploadImageToCloudinary(
       throw error;
     }
 
-    throw new Error('Failed to upload image to Cloudinary. Please try again.');
+    throw new Error(CLOUDINARY_CLIENT_ERROR_MSG);
   }
 }
-
-// Convenience function to upload and get just the URL
-export async function uploadImageAndGetUrl(
-  imageData: string,
-  options: CloudinaryUploadOptions = {}
-): Promise<string> {
-  const result = await uploadImageToCloudinary(imageData, options);
-  return result.secure_url;
-}
-
-export default uploadImageToCloudinary;
