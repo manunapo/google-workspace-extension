@@ -47,7 +47,8 @@ export const getUserCredits = withUserIdAuth(
 
 export const checkReviewCreditsStatus = withUserIdAuth(
   (email: string): { canClaim: boolean } => {
-    const canClaim = !hasClaimedReviewCredits(email);
+    const user = getOrCreateDbUser(email);
+    const canClaim = !hasClaimedReviewCredits(user.id);
     return { canClaim };
   }
 );
@@ -194,7 +195,7 @@ export const grantReviewCredits = withUserIdAuth(
 
     try {
       // Check if user has already claimed review credits
-      if (hasClaimedReviewCredits(email)) {
+      if (hasClaimedReviewCredits(user.id)) {
         return {
           success: false,
           message: 'Review credits have already been claimed for this account.',

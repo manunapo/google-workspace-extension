@@ -19,7 +19,7 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [canClaimReviewCredits, setCanClaimReviewCredits] =
-    React.useState<boolean>(true);
+    React.useState<boolean>(false);
   const [claimingReviewCredits, setClaimingReviewCredits] =
     React.useState<boolean>(false);
   const [showReviewGif, setShowReviewGif] = React.useState<boolean>(false);

@@ -141,10 +141,10 @@ export function logActivity(
  * @param userId - The user ID to get credits for
  * @returns Promise with user credits information
  */
-function getDbUserCredits(userId: string): UserCredits | null {
+function getDbUserCredits(email: string): UserCredits | null {
   const config = getConfig();
   const url = `${config.url}/users?email=eq.${encodeURIComponent(
-    userId
+    email
   )}&select=available_credits`;
 
   try {
@@ -182,6 +182,7 @@ function createNewUser(email: string): User {
   const name = email.split('@')[0];
 
   const newUserData = {
+    id: email,
     email,
     name,
     available_credits: DEFAULT_FREE_CREDITS,
@@ -316,7 +317,7 @@ export function deductDbUserCredits(
  * @returns Promise with updated credits information
  */
 export function addDbUserCredits(
-  userId: string,
+  email: string,
   creditsToAdd: number
 ): UserCredits {
   if (creditsToAdd <= 0) {
@@ -324,7 +325,7 @@ export function addDbUserCredits(
   }
 
   // First, get current credits to calculate new value
-  const currentCredits = getDbUserCredits(userId);
+  const currentCredits = getDbUserCredits(email);
   if (!currentCredits) {
     throw new Error('User not found');
   }
@@ -332,7 +333,7 @@ export function addDbUserCredits(
   const newAvailableCredits = currentCredits.available_credits + creditsToAdd;
 
   const config = getConfig();
-  const url = `${config.url}/users?email=eq.${encodeURIComponent(userId)}`;
+  const url = `${config.url}/users?email=eq.${encodeURIComponent(email)}`;
 
   try {
     const response = UrlFetchApp.fetch(url, {
