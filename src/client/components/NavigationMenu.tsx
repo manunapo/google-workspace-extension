@@ -3,6 +3,7 @@ import { User, Sparkles } from 'lucide-react';
 import { availableTools } from '../../config';
 import type { Tool } from '../../config';
 import AppHeader from './AppHeader';
+import TutorialBanner from './TutorialBanner';
 
 interface NavigationMenuProps {
   isOpen: boolean;
@@ -48,10 +49,12 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
           onProfileClick={onProfileSelect}
         />
 
+        <TutorialBanner />
+
         {/* Menu Items */}
         <div className="flex-1 overflow-y-auto">
           {/* Profile Section */}
-          <div className="p-2 border-b border-gray-100">
+          <div className="px-2 pt-1 border-b border-gray-100">
             <button
               onClick={handleProfileClick}
               className="w-full flex items-center space-x-3 p-3 hover:scale-105 hover:bg-slate-50 rounded-lg transition-all duration-200 text-left border border-transparent hover:border-slate-200 hover:shadow-sm"
@@ -71,7 +74,7 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
           </div>
 
           {/* Tools Section */}
-          <div className="p-2">
+          <div className="px-2 pb-1">
             <div className="text-xs font-medium text-gray-500 uppercase tracking-wide px-3 py-2">
               Available Tools
             </div>

@@ -21,6 +21,15 @@ export interface UserCredits {
   available_credits: number;
 }
 
+export interface ActivityLog {
+  id?: number;
+  userId: string;
+  action: string;
+  context?: string;
+  timestamp?: string;
+  ipAddress?: string;
+}
+
 // Configuration
 interface SupabaseConfig {
   url: string;
@@ -93,6 +102,41 @@ function handleResponse<T>(
 }
 
 /**
+ * Log user activity to the database
+ * @param userId - The user ID (email) to log activity for
+ * @param action - The action being performed (NEW_USER, UPLOAD_IMAGE, TOOL_EXECUTION_OK, TOOL_EXECUTION_NOK)
+ * @param context - Optional context information about the action
+ */
+export function logActivity(
+  userId: string,
+  action: string,
+  context?: string
+): void {
+  try {
+    const config = getConfig();
+    const url = `${config.url}/activity_logs`;
+
+    const activityData = {
+      user_id: userId,
+      action,
+      context: context || null,
+    };
+
+    UrlFetchApp.fetch(url, {
+      method: 'POST',
+      headers: createHeaders(),
+      payload: JSON.stringify(activityData),
+    });
+
+    // We don't handle the response or throw errors here to ensure
+    // activity logging doesn't break core functionality
+  } catch (error) {
+    // Silently fail - activity logging should not break core functionality
+    console.error('Failed to log activity:', error);
+  }
+}
+
+/**
  * Get user credits by user ID
  * @param userId - The user ID to get credits for
  * @returns Promise with user credits information
@@ -157,7 +201,16 @@ function createNewUser(email: string): User {
       throw new Error('Failed to create user - no user returned');
     }
 
-    return createdUsers[0];
+    const newUser = createdUsers[0];
+
+    // Log NEW_USER activity
+    logActivity(
+      newUser.id,
+      'NEW_USER',
+      `User created with ${DEFAULT_FREE_CREDITS} free credits`
+    );
+
+    return newUser;
   } catch (error) {
     throw new Error(
       `Failed to create user: ${
@@ -253,5 +306,84 @@ export function deductDbUserCredits(
         error instanceof Error ? error.message : 'Unknown error'
       }`
     );
+  }
+}
+
+/**
+ * Add credits to user account
+ * @param userId - The user ID to update credits for
+ * @param creditsToAdd - Number of credits to add (positive number)
+ * @returns Promise with updated credits information
+ */
+export function addDbUserCredits(
+  userId: string,
+  creditsToAdd: number
+): UserCredits {
+  if (creditsToAdd <= 0) {
+    throw new Error('Credits to add must be a positive number');
+  }
+
+  // First, get current credits to calculate new value
+  const currentCredits = getDbUserCredits(userId);
+  if (!currentCredits) {
+    throw new Error('User not found');
+  }
+
+  const newAvailableCredits = currentCredits.available_credits + creditsToAdd;
+
+  const config = getConfig();
+  const url = `${config.url}/users?email=eq.${encodeURIComponent(userId)}`;
+
+  try {
+    const response = UrlFetchApp.fetch(url, {
+      method: 'PATCH',
+      headers: createHeaders(),
+      payload: JSON.stringify({
+        available_credits: newAvailableCredits,
+        updated_at: new Date().toISOString(),
+      }),
+    });
+
+    const updatedUsers = handleResponse<User[]>(response);
+
+    if (updatedUsers.length === 0) {
+      throw new Error('Failed to update user credits');
+    }
+
+    return {
+      available_credits: updatedUsers[0].available_credits,
+    };
+  } catch (error) {
+    throw new Error(
+      `Failed to add user credits: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`
+    );
+  }
+}
+
+/**
+ * Check if user has already claimed review credits
+ * @param userId - The user ID to check
+ * @returns boolean indicating if review credits have been claimed
+ */
+export function hasClaimedReviewCredits(userId: string): boolean {
+  try {
+    const config = getConfig();
+    const url = `${config.url}/activity_logs?user_id=eq.${encodeURIComponent(
+      userId
+    )}&action=eq.GRANT_REVIEW_CREDITS&limit=1`;
+
+    const response = UrlFetchApp.fetch(url, {
+      method: 'GET',
+      headers: createHeaders(),
+    });
+
+    const activities = handleResponse<ActivityLog[]>(response);
+    return activities.length > 0;
+  } catch (error) {
+    // If we can't check, assume they haven't claimed to be safe
+    console.error('Failed to check review credits status:', error);
+    return false;
   }
 }

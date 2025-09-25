@@ -3,6 +3,8 @@ import {
   insertImageToTarget,
   executeTool,
   uploadImageAndGetUrl,
+  grantReviewCredits,
+  checkReviewCreditsStatus,
 } from './manager';
 import getUserEmail from './session';
 import {
@@ -29,4 +31,6 @@ export {
   showHelp,
   executeTool,
   uploadImageAndGetUrl,
+  grantReviewCredits,
+  checkReviewCreditsStatus,
 };

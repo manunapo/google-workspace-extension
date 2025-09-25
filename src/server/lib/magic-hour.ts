@@ -85,8 +85,8 @@ export const MAGIC_HOUR_TOOLS = {
         tool: {
           type: 'enum',
           values: Object.keys(AI_IMAGE_TOOLS),
-          required: false,
-          label: 'Art Style',
+          required: true,
+          label: 'Style',
           placeholder: 'Select a creative style',
         },
       },
@@ -244,8 +244,8 @@ export const MAGIC_HOUR_TOOLS = {
         },
         face_swap_mode: {
           type: 'enum',
-          values: ['individual-faces'],
-          default: 'individual-faces',
+          values: ['all-faces'],
+          default: 'all-faces',
           label: 'Swap Mode',
           placeholder: 'How to handle multiple faces',
         },

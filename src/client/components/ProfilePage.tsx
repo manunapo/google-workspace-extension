@@ -6,22 +6,31 @@ import {
   Play,
   HelpCircle,
   MessageCircle,
+  Star,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import Alert from './ui/alert';
 import { serverFunctions } from '../utils/serverFunctions';
 import { useUserCredits } from '../hooks/useUserCredits';
-import { VERSION } from '../../constants';
+import { VERSION, DEFAULT_REVIEW_CREDITS } from '../../constants';
 
 const ProfilePage: React.FC = () => {
   const [userEmail, setUserEmail] = React.useState<string>('');
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [canClaimReviewCredits, setCanClaimReviewCredits] =
+    React.useState<boolean>(true);
+  const [claimingReviewCredits, setClaimingReviewCredits] =
+    React.useState<boolean>(false);
+  const [showReviewGif, setShowReviewGif] = React.useState<boolean>(false);
+  const [reviewInstructionsShown, setReviewInstructionsShown] =
+    React.useState<boolean>(false);
 
   const {
     credits,
     loading: creditsLoading,
     getCreditsDisplay,
+    refreshCredits,
   } = useUserCredits(true);
 
   React.useEffect(() => {
@@ -39,12 +48,65 @@ const ProfilePage: React.FC = () => {
     fetchUserEmail();
   }, []);
 
+  React.useEffect(() => {
+    const checkReviewCreditsStatus = async () => {
+      try {
+        const status = await serverFunctions.checkReviewCreditsStatus();
+        setCanClaimReviewCredits(status.canClaim);
+      } catch (err) {
+        // Assume they can claim if check fails
+        setCanClaimReviewCredits(true);
+      }
+    };
+
+    checkReviewCreditsStatus();
+  }, []);
+
   const handleBuyCredits = () => {
     window.open('https://getstyled.art/addon/pricing', '_blank');
   };
 
   const handleOpenTutorial = () => {
     serverFunctions.openTutorialDialog();
+  };
+
+  const handleShowReviewInstructions = () => {
+    if (!canClaimReviewCredits) return;
+
+    setShowReviewGif(true);
+    setReviewInstructionsShown(true);
+  };
+
+  const handleGoToReview = () => {
+    setShowReviewGif(false);
+    window.open(
+      'https://workspace.google.com/marketplace/app/gpt_image_generator/276320676536',
+      '_blank'
+    );
+  };
+
+  const handleClaimReviewCredits = async () => {
+    if (!canClaimReviewCredits || claimingReviewCredits) return;
+
+    setClaimingReviewCredits(true);
+    try {
+      const result = await serverFunctions.grantReviewCredits();
+      if (result.success) {
+        setCanClaimReviewCredits(false);
+        await refreshCredits();
+        setShowReviewGif(false);
+        setReviewInstructionsShown(false);
+        setError(null);
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to claim review credits'
+      );
+    } finally {
+      setClaimingReviewCredits(false);
+    }
   };
 
   const clearError = () => setError(null);
@@ -61,7 +123,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Account Information */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2">
             <Mail className="w-5 h-5 text-gray-500" />
             <h2 className="text-base font-semibold text-gray-800">
               Account Information
@@ -69,7 +131,7 @@ const ProfilePage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 pb-0 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                   Email Address
@@ -132,6 +194,81 @@ const ProfilePage: React.FC = () => {
                   You're running low on credits! Purchase more to continue using
                   AI tools.
                 </p>
+              </div>
+            )}
+
+            {/* Review Credits Section */}
+            {canClaimReviewCredits && (
+              <div className="p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-300 rounded-lg">
+                <h3 className="text-sm font-medium text-gray-800 mb-1">
+                  Get {DEFAULT_REVIEW_CREDITS} Free Credits!
+                </h3>
+                <p className="text-xs text-gray-600 mb-3">
+                  Rate our addon in the Google Workspace Marketplace with 5 ⭐
+                  and get {DEFAULT_REVIEW_CREDITS} free credits instantly!
+                </p>
+
+                {/* Show GIF Instructions */}
+                {showReviewGif && (
+                  <div className="mb-3">
+                    <img
+                      src="https://getstyled.art/gifs/makeReview.gif"
+                      alt="How to leave a review"
+                      className="w-full rounded border mb-3"
+                    />
+                  </div>
+                )}
+
+                {!reviewInstructionsShown && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800"
+                    onClick={handleShowReviewInstructions}
+                  >
+                    <Star className="w-3 h-3 mr-1" />
+                    See How to Review
+                  </Button>
+                )}
+
+                {reviewInstructionsShown && showReviewGif && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800"
+                      onClick={handleGoToReview}
+                    >
+                      <Star className="w-3 h-3 mr-1" />
+                      Go Write Review
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-800"
+                      onClick={() => {
+                        setShowReviewGif(false);
+                        setReviewInstructionsShown(false);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+
+                {reviewInstructionsShown && !showReviewGif && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800"
+                    onClick={handleClaimReviewCredits}
+                    disabled={claimingReviewCredits}
+                  >
+                    {claimingReviewCredits
+                      ? 'Claiming...'
+                      : "I've Written My Review - Claim"}
+                  </Button>
+                )}
               </div>
             )}
 

@@ -77,6 +77,9 @@ const ToolPage: React.FC<ToolPageProps> = ({
   const { hasEnoughCredits, getCreditsDisplay } = useUserCredits();
   const { showError } = useToast();
 
+  // Ref for auto-scrolling to generated image
+  const generatedImageRef = React.useRef<HTMLDivElement>(null);
+
   // Flatten the tool parameters for easier management
   const flattenedParams = React.useMemo(
     () => flattenParameters(tool.parameters),
@@ -112,7 +115,21 @@ const ToolPage: React.FC<ToolPageProps> = ({
     });
 
     setFormData(newFormData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tool.id]); // Only reset when tool changes
+
+  // Auto-scroll to generated image when a new image is generated
+  React.useEffect(() => {
+    if (generatedImage && generatedImageRef.current) {
+      // Small delay to ensure the component is rendered
+      setTimeout(() => {
+        generatedImageRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 100);
+    }
+  }, [generatedImage]);
 
   const handleParameterChange = (key: string, value: any) => {
     setFormData((prev) => ({
@@ -222,9 +239,11 @@ const ToolPage: React.FC<ToolPageProps> = ({
 
         {/* Generated Image Display */}
         {(generatedImage || lastGeneratedImage) && (
-          <GeneratedImageDisplay
-            imageData={generatedImage || lastGeneratedImage!}
-          />
+          <div ref={generatedImageRef}>
+            <GeneratedImageDisplay
+              imageData={generatedImage || lastGeneratedImage!}
+            />
+          </div>
         )}
       </div>
 

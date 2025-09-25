@@ -2,7 +2,14 @@
 import { insertImageToDoc } from './documents';
 import { generateGeminiImage } from './lib/gemini';
 import { MAGIC_HOUR_TOOLS, processWithMagicHour } from './lib/magic-hour';
-import { deductDbUserCredits, getOrCreateDbUser, User } from './lib/supabase';
+import {
+  addDbUserCredits,
+  deductDbUserCredits,
+  getOrCreateDbUser,
+  hasClaimedReviewCredits,
+  logActivity,
+  User,
+} from './lib/supabase';
 import { insertImageToSlide } from './slides';
 import getUserEmail from './session';
 import { insertImageToSheet } from './spreadsheets';
@@ -11,6 +18,7 @@ import {
   CloudinaryUploadOptions,
   uploadImageToCloudinary,
 } from './lib/cloudinary';
+import { DEFAULT_REVIEW_CREDITS } from '../constants';
 
 /**
  * Higher-order function that wraps a function with user ID authentication
@@ -34,6 +42,13 @@ function withUserIdAuth<T extends unknown[], R>(
 export const getUserCredits = withUserIdAuth(
   (email: string): Pick<User, 'available_credits'> => {
     return getOrCreateDbUser(email);
+  }
+);
+
+export const checkReviewCreditsStatus = withUserIdAuth(
+  (email: string): { canClaim: boolean } => {
+    const canClaim = !hasClaimedReviewCredits(email);
+    return { canClaim };
   }
 );
 
@@ -76,11 +91,30 @@ export const executeTool = withUserIdAuth(
       }
     } catch (error) {
       console.error(`Failed to execute tool ${toolId}:`, error);
+
+      // Log TOOL_EXECUTION_NOK activity
+      logActivity(
+        user.id,
+        'TOOL_EXECUTION_NOK',
+        `Tool ${toolId} failed with parameters: ${JSON.stringify(
+          parameters
+        )} error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+
       throw error;
     }
 
     // Tool execution successful - deduct credits
     if (result) {
+      // Log TOOL_EXECUTION_OK activity
+      logActivity(
+        user.id,
+        'TOOL_EXECUTION_OK',
+        `Tool ${toolId} executed successfully. Credits used: ${toolCredits}. Parameters: ${JSON.stringify(
+          parameters
+        )}`
+      );
+
       try {
         deductDbUserCredits(user.email, toolCredits);
         console.log(
@@ -124,7 +158,81 @@ export const uploadImageAndGetUrl = withUserIdAuth(
     options: CloudinaryUploadOptions = {}
   ): Promise<string> => {
     console.log(email);
-    const result = await uploadImageToCloudinary(imageData, options);
-    return result.secure_url;
+    const user = getOrCreateDbUser(email);
+
+    try {
+      const result = await uploadImageToCloudinary(imageData, options);
+
+      // Log UPLOAD_IMAGE_OK activity
+      logActivity(
+        user.id,
+        'UPLOAD_IMAGE_OK',
+        `Image uploaded to Cloudinary: ${result.public_id}`
+      );
+
+      return result.secure_url;
+    } catch (error) {
+      // Log UPLOAD_IMAGE_NOK activity
+      logActivity(
+        user.id,
+        'UPLOAD_IMAGE_NOK',
+        `Image upload failed: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+
+      throw error;
+    }
+  }
+);
+
+// Grant review credits to user (one-time only)
+export const grantReviewCredits = withUserIdAuth(
+  (email: string): { success: boolean; message: string; credits?: number } => {
+    // Ensure user exists
+    const user = getOrCreateDbUser(email);
+
+    try {
+      // Check if user has already claimed review credits
+      if (hasClaimedReviewCredits(email)) {
+        return {
+          success: false,
+          message: 'Review credits have already been claimed for this account.',
+        };
+      }
+
+      // Grant review credits
+      const updatedCredits = addDbUserCredits(email, DEFAULT_REVIEW_CREDITS);
+
+      // Log GRANT_REVIEW_CREDITS activity
+      logActivity(
+        user.id,
+        'GRANT_REVIEW_CREDITS',
+        `User granted ${DEFAULT_REVIEW_CREDITS} review credits. New balance: ${updatedCredits.available_credits}`
+      );
+
+      return {
+        success: true,
+        message: `${DEFAULT_REVIEW_CREDITS} review credits added to your account!`,
+        credits: updatedCredits.available_credits,
+      };
+    } catch (error) {
+      console.error('Failed to grant review credits:', error);
+
+      // Log failed attempt
+      logActivity(
+        user.id,
+        'GRANT_REVIEW_CREDITS_FAILED',
+        `Failed to grant review credits: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+
+      throw new Error(
+        `Failed to grant review credits: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
   }
 );

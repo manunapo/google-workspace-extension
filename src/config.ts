@@ -8,28 +8,28 @@ export interface Prompt {
 
 export const createPrompts: Prompt[] = [
   {
-    id: 'flowchart-customer-onboarding',
-    label: 'Onboarding Flowchart',
+    id: 'ai-logo-generator',
+    label: 'AI Logo Generator',
     prompt:
-      'Clean process flowchart of a customer onboarding journey, 5 steps, minimal design.',
+      'Modern minimalist logo for ACME company, clean typography, simple icon, professional black and white design.',
   },
   {
-    id: 'process-flow',
-    label: 'Process Flow',
+    id: 'ai-background-generator',
+    label: 'AI Background Generator',
     prompt:
-      'Create a process flow diagram that illustrates the key stages involved in baking bread. Use colors and clear labels and a logical left-to-right or top-down flow. Include high-level steps only: mixing, kneading, proofing, baking, and use a minimal, business-style visual aesthetic. Dont put a title to the graphic.',
+      'Subtle gradient background, soft blue to white, minimal texture, perfect for presentations.',
   },
   {
-    id: '3d-render',
-    label: '3D Render',
+    id: 'ai-tattoo-generator',
+    label: 'AI Tattoo Generator',
     prompt:
-      'Create a modern 3D rendered object with clean geometry, professional lighting, and realistic materials. Studio lighting setup.',
+      'Traditional rose tattoo design, bold black lines, detailed shading, classic American traditional style.',
   },
   {
-    id: 'illustration',
-    label: 'Digital Art',
+    id: 'architecture-generator',
+    label: 'Architecture Generator',
     prompt:
-      'Create a digital illustration with vibrant colors, artistic style, and creative composition. Modern digital art aesthetic.',
+      'Modern glass office building, clean lines, large windows, urban setting, contemporary architecture.',
   },
 ];
 
@@ -38,19 +38,18 @@ export const editPrompts: Prompt[] = [
     id: 'add-text-pill',
     label: 'Add Text Badge',
     prompt:
-      'Add a modern text pill or badge overlay to this image. The text should be contained in a rounded rectangle with a clean design, positioned prominently. The text should be "Watch This!"',
+      'Add a modern text pill or badge overlay to this image. Make it 1/4 of the image size. The text should be contained in a rounded rectangle with a clean design, positioned prominently. The text should be "Watch This!"',
   },
   {
-    id: 'remove-background',
-    label: 'Remove Background',
+    id: 'change-color',
+    label: 'Change Color',
     prompt:
-      'Remove the background of this image while keeping the main subject intact.',
+      'Change the color of the image to a more vibrant and exciting red color.',
   },
   {
-    id: 'change-background',
-    label: 'Change Background',
-    prompt:
-      'Replace the background of this image with a new, more suitable background of the sea while keeping the main subject intact.',
+    id: 'add-glasses',
+    label: 'Add me glasses',
+    prompt: 'Add me a pair of stylish glasses.',
   },
   {
     id: '3d-pixar-style',
@@ -308,7 +307,7 @@ const geminiImageEditorTool: Tool = {
   id: 'gemini-ai-image-editor',
   name: 'AI Image Editor',
   description: 'Edit and transform images using AI',
-  credits: 50,
+  credits: 25,
   parameters: {
     name: {
       type: 'string',
