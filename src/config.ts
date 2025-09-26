@@ -48,8 +48,8 @@ export const editPrompts: Prompt[] = [
   },
   {
     id: 'add-glasses',
-    label: 'Add me glasses',
-    prompt: 'Add me a pair of stylish glasses.',
+    label: 'Give him glasses',
+    prompt: 'Give him sunglasses.',
   },
   {
     id: '3d-pixar-style',
@@ -285,6 +285,24 @@ const toolExecutionFunctions: Record<string, string> = {
   'ai-clothes-changer': 'changeClothes',
 };
 
+// Tool execution function mapping - Direct mapping to specific Magic Hour functions
+const toolThumbnails: Record<string, string> = {
+  'ai-image-generator':
+    'https://getstyled.art/images/thumbnails/ai-tools/ai-image-generator.webp',
+  'ai-gif-creator':
+    'https://getstyled.art/images/thumbnails/ai-tools/ai-gif-creator.webm',
+  'ai-headshot-generator':
+    'https://getstyled.art/images/thumbnails/ai-tools/ai-headshot-generator.webp',
+  'ai-meme-generator':
+    'https://getstyled.art/images/thumbnails/ai-tools/ai-meme-generator.webp',
+  'image-background-remover':
+    'https://getstyled.art/images/thumbnails/ai-tools/image-background-remover.webp',
+  'face-swap-photo':
+    'https://getstyled.art/images/thumbnails/ai-tools/face-swap-photo.webp',
+  'ai-clothes-changer':
+    'https://getstyled.art/images/thumbnails/ai-tools/ai-clothes-changer.webp',
+};
+
 // Transform Magic Hour tools to Tool interface format
 const magicHourTools: Tool[] = Object.entries(MAGIC_HOUR_TOOLS).map(
   ([id, config]) => ({
@@ -293,7 +311,7 @@ const magicHourTools: Tool[] = Object.entries(MAGIC_HOUR_TOOLS).map(
     description: toolDescriptions[id] || 'Advanced AI-powered tool',
     credits: config.credits,
     parameters: config.parameters as Record<string, unknown>,
-    thumbnail: `https://d28dkohlqf5vwj.cloudfront.net/projects/ai-image-generator-landing-page.webp`, // Placeholder thumbnail path
+    thumbnail: toolThumbnails[id] || '',
     // eslint-disable-next-line no-unneeded-ternary
     isNew: id === 'ai-image-generator' ? false : true,
     prompts: getPromptsForTool(id),
@@ -338,7 +356,8 @@ const geminiImageEditorTool: Tool = {
         'How creative should the AI be? (0 = precise, 1 = very creative)',
     },
   },
-  thumbnail: 'https://getstyled.art/icons/logo_v2_96.webp',
+  thumbnail:
+    'https://getstyled.art/images/thumbnails/ai-tools/gemini-ai-image-editor.webp',
   isNew: false,
   prompts: editPrompts,
   labelActionButton: 'Edit Image',

@@ -10,6 +10,7 @@ import { useToast } from '../hooks/useToast';
 import { useUserCredits } from '../hooks/useUserCredits';
 import { serverFunctions } from '../utils/serverFunctions';
 import { processImageParameters } from '../utils/images';
+import { useMediaPreloader } from '../utils/mediaPreloader';
 
 // Types for the app state
 type AppPage = 'tool' | 'profile';
@@ -32,6 +33,7 @@ const App: React.FC = () => {
 
   const { showError, showSuccess } = useToast();
   const { refreshCredits } = useUserCredits();
+  const { preloadMediaList } = useMediaPreloader();
 
   // Generated image state
   const [generatedImage, setGeneratedImage] = React.useState<string | null>(
@@ -40,6 +42,27 @@ const App: React.FC = () => {
   const [lastGeneratedImage, setLastGeneratedImage] = React.useState<
     string | null
   >(null);
+
+  // Preload all tool thumbnails on app start
+  React.useEffect(() => {
+    const preloadThumbnails = async () => {
+      try {
+        // Extract all thumbnail URLs from available tools
+        const thumbnailUrls = availableTools
+          .map((tool: Tool) => tool.thumbnail)
+          .filter((url): url is string => Boolean(url));
+
+        if (thumbnailUrls.length > 0) {
+          await preloadMediaList(thumbnailUrls);
+          // Successfully preloaded thumbnails
+        }
+      } catch (error) {
+        // Failed to preload some thumbnails, but app continues to work
+      }
+    };
+
+    preloadThumbnails();
+  }, [preloadMediaList]);
 
   // Handle navigation actions
   const navigateToTool = React.useCallback((tool: Tool) => {

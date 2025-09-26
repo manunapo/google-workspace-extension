@@ -8,6 +8,7 @@ import Spinner from './ui/spinner';
 import GeneratedImageDisplay from './GeneratedImageDisplay';
 import { useUserCredits } from '../hooks/useUserCredits';
 import { useToast } from '../hooks/useToast';
+import { useMediaPreloader } from '../utils/mediaPreloader';
 
 interface ToolPageProps {
   tool: Tool;
@@ -16,6 +17,11 @@ interface ToolPageProps {
   generatedImage?: string | null;
   lastGeneratedImage?: string | null;
 }
+
+// Helper function to check if URL is a webm video
+const isWebmVideo = (url: string): boolean => {
+  return url.toLowerCase().endsWith('.webm');
+};
 
 // Helper function to flatten nested parameter structure
 const flattenParameters = (
@@ -65,6 +71,94 @@ const unflattenParameters = (
   });
 
   return result;
+};
+
+// Component to render thumbnail (either image or video)
+interface ThumbnailRendererProps {
+  src: string;
+  alt: string;
+  className: string;
+}
+
+const ThumbnailRenderer: React.FC<ThumbnailRendererProps> = ({
+  src,
+  alt,
+  className,
+}) => {
+  const { isMediaReady, hasMediaError } = useMediaPreloader();
+  const [isLoaded, setIsLoaded] = React.useState(false);
+  const [hasError, setHasError] = React.useState(false);
+
+  // Check if media is preloaded and ready
+  const isPreloaded = isMediaReady(src);
+  const preloadError = hasMediaError(src);
+
+  // Reset loading state when src changes
+  React.useEffect(() => {
+    // If media is already preloaded, set it as loaded immediately
+    if (isPreloaded) {
+      setIsLoaded(true);
+      setHasError(false);
+    } else if (preloadError) {
+      setIsLoaded(false);
+      setHasError(true);
+    } else {
+      setIsLoaded(false);
+      setHasError(false);
+    }
+  }, [src, isPreloaded, preloadError]);
+
+  const handleLoad = React.useCallback(() => {
+    setIsLoaded(true);
+  }, []);
+
+  const handleError = React.useCallback(() => {
+    setHasError(true);
+    setIsLoaded(false);
+  }, []);
+
+  if (isWebmVideo(src)) {
+    return (
+      <>
+        {!isLoaded && !hasError && (
+          <div
+            className={`${className} flex items-center justify-center bg-gradient-to-r from-purple-50 to-blue-50`}
+          >
+            <div className="text-purple-400 text-2xl">🎨</div>
+          </div>
+        )}
+        <video
+          src={src}
+          className={`${className} ${isLoaded ? 'block' : 'hidden'}`}
+          autoPlay
+          loop
+          muted
+          playsInline
+          onLoadedData={!isPreloaded ? handleLoad : undefined}
+          onError={!isPreloaded ? handleError : undefined}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {!isLoaded && !hasError && (
+        <div
+          className={`${className} flex items-center justify-center bg-gradient-to-r from-purple-50 to-blue-50`}
+        >
+          <div className="text-purple-400 text-2xl">🎨</div>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`${className} ${isLoaded ? 'block' : 'hidden'}`}
+        onLoad={!isPreloaded ? handleLoad : undefined}
+        onError={!isPreloaded ? handleError : undefined}
+      />
+    </>
+  );
 };
 
 const ToolPage: React.FC<ToolPageProps> = ({
@@ -191,24 +285,16 @@ const ToolPage: React.FC<ToolPageProps> = ({
       {/* Tool Info */}
       <div className="flex flex-col gap-2 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
         <div className="relative w-full h-32 overflow-hidden rounded-md bg-gradient-to-r from-purple-50 to-blue-50">
-          <div className="absolute bottom-0 w-full flex items-center gap-2 bg-white/80 p-1">
+          <div className="absolute bottom-0 w-full flex items-center gap-2 bg-white/80 p-1 z-10">
             <div className="text-xs w-full text-end italic font-medium text-slate-600 wrap">
               {tool.description}.
             </div>
           </div>
-          <img
+          <ThumbnailRenderer
+            key={tool.id}
             src={tool.thumbnail}
             alt={`${tool.name} thumbnail`}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback to gradient background if image fails to load
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const fallback = target.parentElement?.querySelector(
-                '.fallback-bg'
-              ) as HTMLElement;
-              if (fallback) fallback.style.display = 'flex';
-            }}
           />
         </div>
       </div>
