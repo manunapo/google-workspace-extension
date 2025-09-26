@@ -1,15 +1,18 @@
+import { getImageInfo } from './utils';
+
 // Insert image into the current document at the cursor position
 export const insertImageToDoc = (imageData: string): void => {
   try {
     const doc = DocumentApp.getActiveDocument();
     const cursor = doc.getCursor();
 
-    // Convert base64 data URL to blob
+    // Extract image info and convert base64 data URL to blob
+    const imageInfo = getImageInfo(imageData);
     const base64Data = imageData.split(',')[1]; // Remove data:image/...;base64, part
     const blob = Utilities.newBlob(
       Utilities.base64Decode(base64Data),
-      'image/png',
-      'generated-image.png'
+      imageInfo.mimeType,
+      `generated-image.${imageInfo.extension}`
     );
 
     if (cursor) {

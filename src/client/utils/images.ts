@@ -2,6 +2,8 @@
  * Utility functions for resizing images to fit within Google Sheets constraints
  */
 
+import { serverFunctions } from './serverFunctions';
+
 // Google Sheets limits: 2MB file size, 1 million pixels max
 const MAX_PIXELS = 800000; // Using 800k instead of 1M for safety margin
 const MAX_FILE_SIZE = 1.5 * 1024 * 1024; // 1.5MB instead of 2MB for safety margin
@@ -43,6 +45,12 @@ const hasTransparency = (imageData: string): boolean => {
 export const resizeImageForSheets = (imageData: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     try {
+      // Check if it's a GIF - handle differently to preserve animation
+      if (imageData.startsWith('data:image/gif')) {
+        resolve(imageData);
+        return;
+      }
+
       // Create canvas and image elements
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -165,4 +173,78 @@ export const getImageDimensions = (
     img.onerror = () => reject(new Error('Failed to load image'));
     img.src = imageData;
   });
+};
+
+// Utility function to convert base64 to File
+export const base64ToFile = (base64: string, filename: string): File => {
+  const arr = base64.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n > 0) {
+    n -= 1;
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+};
+
+export const fileToBase64 = (file: File): Promise<string> => {
+  const reader = new FileReader();
+  return new Promise((resolve) => {
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.readAsDataURL(file);
+  });
+};
+
+// Single function to process all image parameters in one pass
+export const processImageParameters = async (
+  toolParameters: Record<string, unknown>,
+  formData: Record<string, unknown>
+): Promise<Record<string, unknown>> => {
+  const processedData = { ...formData };
+
+  const processObject = async (
+    configObj: Record<string, unknown>,
+    dataObj: Record<string, unknown>,
+    prefix = ''
+  ): Promise<void> => {
+    const promises = Object.entries(configObj).map(async ([key, config]) => {
+      const currentKey = prefix ? `${prefix}.${key}` : key;
+      const value = dataObj[key];
+
+      if (config && typeof config === 'object') {
+        // Check if this is an image parameter
+        if ('type' in config) {
+          const paramType = (config as { type: string }).type;
+
+          if (paramType === 'image_b64') {
+            // Convert File to base64
+            const base64Data = await fileToBase64(value as File);
+            // eslint-disable-next-line no-param-reassign
+            dataObj[key] = base64Data;
+          } else if (paramType === 'image_url' && value instanceof File) {
+            const base64Data = await fileToBase64(value as File);
+            const imageUrl = await serverFunctions.uploadImageAndGetUrl(
+              base64Data
+            );
+            // eslint-disable-next-line no-param-reassign
+            dataObj[key] = imageUrl;
+          }
+        } else if (dataObj[key] && typeof dataObj[key] === 'object') {
+          // Recursively process nested objects
+          await processObject(
+            config as Record<string, unknown>,
+            dataObj[key] as Record<string, unknown>,
+            currentKey
+          );
+        }
+      }
+    });
+
+    await Promise.all(promises);
+  };
+
+  await processObject(toolParameters, processedData);
+  return processedData;
 };

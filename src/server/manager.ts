@@ -1,13 +1,24 @@
-import { DEFAULT_FREE_CREDITS } from '../constants';
+/* eslint-disable no-console */
 import { insertImageToDoc } from './documents';
-// import { generateOpenAIImage } from './lib/openai';
 import { generateGeminiImage } from './lib/gemini';
-import { deductDbUserCredits, getDbUserCredits } from './lib/supabase';
-import { insertImageToSlide } from './presentations';
-import { getUserProperties, setUserProperties } from './properties';
+import { MAGIC_HOUR_TOOLS, processWithMagicHour } from './lib/magic-hour';
+import {
+  addDbUserCredits,
+  deductDbUserCredits,
+  getOrCreateDbUser,
+  hasClaimedReviewCredits,
+  logActivity,
+  User,
+} from './lib/supabase';
+import { insertImageToSlide } from './slides';
 import getUserEmail from './session';
 import { insertImageToSheet } from './spreadsheets';
 import { getScriptContext } from './ui';
+import {
+  CloudinaryUploadOptions,
+  uploadImageToCloudinary,
+} from './lib/cloudinary';
+import { DEFAULT_REVIEW_CREDITS } from '../constants';
 
 /**
  * Higher-order function that wraps a function with user ID authentication
@@ -28,77 +39,96 @@ function withUserIdAuth<T extends unknown[], R>(
   };
 }
 
-export const getUserCredits = withUserIdAuth((userId: string) => {
-  const creditsProperty = getUserProperties('free_credits');
-  if (creditsProperty === null) {
-    console.log(
-      `New user ${userId} has no free credits, giving ${DEFAULT_FREE_CREDITS} free credits`
-    );
-    setUserProperties('free_credits', DEFAULT_FREE_CREDITS);
+export const getUserCredits = withUserIdAuth(
+  (email: string): Pick<User, 'available_credits'> => {
+    return getOrCreateDbUser(email);
   }
-  const freeCredits = parseInt(getUserProperties('free_credits') || '0', 10);
-  if (freeCredits > 0) {
-    console.log(
-      `User ${userId} has ${freeCredits} free credits from properties`
-    );
+);
+
+export const checkReviewCreditsStatus = withUserIdAuth(
+  (email: string): { canClaim: boolean } => {
+    const user = getOrCreateDbUser(email);
+    const canClaim = !hasClaimedReviewCredits(user.id);
+    return { canClaim };
   }
+);
 
-  const dbCredits = getDbUserCredits(userId);
-  return {
-    available_credits: freeCredits + (dbCredits?.available_credits || 0),
-  };
-});
-
-export const generateImage = withUserIdAuth(
+// Unified tool execution function
+export const executeTool = withUserIdAuth(
   async (
-    userId: string,
-    prompt: string,
-    referenceImage?: string | null,
-    transparentBackground = false,
-    temperature = 0.7
+    email: string,
+    toolId: string,
+    toolCredits: number,
+    parameters: Record<string, unknown>
   ) => {
-    const freeCredits = parseInt(getUserProperties('free_credits') || '0', 10);
-    let availableCredits = freeCredits;
-    let usingFreeCredits = true;
-    if (freeCredits < 1) {
-      const dbCredits = getDbUserCredits(userId);
-      availableCredits = dbCredits?.available_credits || 0;
-      usingFreeCredits = false;
-    }
+    console.log('Executing tool with parameters:', parameters);
+    const user = getOrCreateDbUser(email);
+    const availableCredits = user.available_credits;
 
-    if (availableCredits < 1) {
+    // Check if user has enough credits
+    if (availableCredits < toolCredits) {
       throw new Error(
-        `Insufficient credits. You have ${availableCredits} credits but need 1 credit to generate an image. Please purchase more credits.`
+        `Insufficient credits. You have ${availableCredits} credits but need ${toolCredits} credits to use this tool. Please purchase more credits.`
       );
     }
 
-    const imageUrl = await generateGeminiImage(
-      prompt,
-      referenceImage,
-      Boolean(transparentBackground),
-      Number(temperature)
-    );
+    let result: string | null = null;
+    const creationName = `${email.split('@')[0]}_${toolId}_${Date.now()}`;
 
-    // Image generation successful - deduct credits
-    if (imageUrl) {
+    try {
+      // Execute the appropriate tool based on toolId
+      if (toolId === 'gemini-ai-image-editor') {
+        result = await generateGeminiImage(
+          parameters.prompt as string,
+          parameters.referenceImage as string,
+          Number(parameters.temperature || 0.7)
+        );
+      } else {
+        result = await processWithMagicHour({
+          tool: toolId as keyof typeof MAGIC_HOUR_TOOLS,
+          ...parameters,
+          name: creationName,
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to execute tool ${toolId}:`, error);
+
+      // Log TOOL_EXECUTION_NOK activity
+      logActivity(
+        user.id,
+        'TOOL_EXECUTION_NOK',
+        `Tool ${toolId} failed with parameters: ${JSON.stringify(
+          parameters
+        )} error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+
+      throw error;
+    }
+
+    // Tool execution successful - deduct credits
+    if (result) {
+      // Log TOOL_EXECUTION_OK activity
+      logActivity(
+        user.id,
+        'TOOL_EXECUTION_OK',
+        `Tool ${toolId} executed successfully. Credits used: ${toolCredits}. Parameters: ${JSON.stringify(
+          parameters
+        )}`
+      );
+
       try {
-        if (usingFreeCredits) {
-          setUserProperties('free_credits', (freeCredits - 1).toString());
-        } else {
-          deductDbUserCredits(userId, 1);
-        }
+        deductDbUserCredits(user.email, toolCredits);
         console.log(
-          `Credits deducted successfully. Remaining credits: ${
-            availableCredits - 1
+          `Credits deducted successfully for ${toolId}. Remaining credits: ${
+            availableCredits - toolCredits
           }`
         );
       } catch (creditError) {
         console.error('Failed to deduct credits:', creditError);
-        // We'll still return the image since generation was successful
-        // but log the credit deduction failure
       }
     }
-    return imageUrl;
+
+    return result;
   }
 );
 
@@ -120,3 +150,90 @@ export const insertImageToTarget = (imageData: string): void => {
       throw new Error(`Unsupported context: ${context}`);
   }
 };
+
+// Convenience function to upload and get just the URL
+export const uploadImageAndGetUrl = withUserIdAuth(
+  async (
+    email: string,
+    imageData: string,
+    options: CloudinaryUploadOptions = {}
+  ): Promise<string> => {
+    console.log(email);
+    const user = getOrCreateDbUser(email);
+
+    try {
+      const result = await uploadImageToCloudinary(imageData, options);
+
+      // Log UPLOAD_IMAGE_OK activity
+      logActivity(
+        user.id,
+        'UPLOAD_IMAGE_OK',
+        `Image uploaded to Cloudinary: ${result.public_id}`
+      );
+
+      return result.secure_url;
+    } catch (error) {
+      // Log UPLOAD_IMAGE_NOK activity
+      logActivity(
+        user.id,
+        'UPLOAD_IMAGE_NOK',
+        `Image upload failed: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+
+      throw error;
+    }
+  }
+);
+
+// Grant review credits to user (one-time only)
+export const grantReviewCredits = withUserIdAuth(
+  (email: string): { success: boolean; message: string; credits?: number } => {
+    // Ensure user exists
+    const user = getOrCreateDbUser(email);
+
+    try {
+      // Check if user has already claimed review credits
+      if (hasClaimedReviewCredits(user.id)) {
+        return {
+          success: false,
+          message: 'Review credits have already been claimed for this account.',
+        };
+      }
+
+      // Grant review credits
+      const updatedCredits = addDbUserCredits(email, DEFAULT_REVIEW_CREDITS);
+
+      // Log GRANT_REVIEW_CREDITS activity
+      logActivity(
+        user.id,
+        'GRANT_REVIEW_CREDITS',
+        `User granted ${DEFAULT_REVIEW_CREDITS} review credits. New balance: ${updatedCredits.available_credits}`
+      );
+
+      return {
+        success: true,
+        message: `${DEFAULT_REVIEW_CREDITS} review credits added to your account!`,
+        credits: updatedCredits.available_credits,
+      };
+    } catch (error) {
+      console.error('Failed to grant review credits:', error);
+
+      // Log failed attempt
+      logActivity(
+        user.id,
+        'GRANT_REVIEW_CREDITS_FAILED',
+        `Failed to grant review credits: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+
+      throw new Error(
+        `Failed to grant review credits: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
+  }
+);

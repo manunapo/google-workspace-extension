@@ -1,3 +1,5 @@
+import { getImageInfo } from './utils';
+
 // Insert image into the current presentation slide
 export const insertImageToSlide = (imageData: string): void => {
   try {
@@ -10,12 +12,13 @@ export const insertImageToSlide = (imageData: string): void => {
       throw new Error('No slide selected');
     }
 
-    // Convert base64 data URL to blob
+    // Extract image info and convert base64 data URL to blob
+    const imageInfo = getImageInfo(imageData);
     const base64Data = imageData.split(',')[1]; // Remove data:image/...;base64, part
     const blob = Utilities.newBlob(
       Utilities.base64Decode(base64Data),
-      'image/png',
-      'generated-image.png'
+      imageInfo.mimeType,
+      `generated-image.${imageInfo.extension}`
     );
 
     // Insert the image in the center of the slide

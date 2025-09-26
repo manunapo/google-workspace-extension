@@ -1,4 +1,11 @@
-import { generateImage, getUserCredits, insertImageToTarget } from './manager';
+import {
+  getUserCredits,
+  insertImageToTarget,
+  executeTool,
+  uploadImageAndGetUrl,
+  grantReviewCredits,
+  checkReviewCreditsStatus,
+} from './manager';
 import getUserEmail from './session';
 import {
   onOpen,
@@ -16,11 +23,14 @@ export {
   onInstall,
   openSidebar,
   openAboutUsDialog,
-  generateImage,
   getUserEmail,
   insertImageToTarget,
   getUserCredits,
   openTutorialDialog,
   authorizeAddon,
   showHelp,
+  executeTool,
+  uploadImageAndGetUrl,
+  grantReviewCredits,
+  checkReviewCreditsStatus,
 };

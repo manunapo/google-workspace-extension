@@ -19,7 +19,6 @@ const TutorialBanner: React.FC = () => {
   });
 
   const handleDismissTutorial = React.useCallback((e: React.MouseEvent) => {
-    console.log('Dismiss tutorial clicked');
     e.stopPropagation(); // Prevent event bubbling to parent div
     setShowTutorial(false);
     try {
@@ -32,7 +31,6 @@ const TutorialBanner: React.FC = () => {
   }, []);
 
   const handleOpenTutorial = React.useCallback(() => {
-    console.log('Open tutorial clicked');
     serverFunctions.openTutorialDialog();
   }, []);
 
@@ -41,7 +39,7 @@ const TutorialBanner: React.FC = () => {
   }
 
   return (
-    <div className="mx-4 mb-2 p-1 relative bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg shadow-sm">
+    <div className="m-1 p-1 relative bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg shadow-sm">
       <button
         onClick={handleDismissTutorial}
         className="absolute top-2 right-2 z-10 text-gray-400 hover:text-gray-600 transition-colors"

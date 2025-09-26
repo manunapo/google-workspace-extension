@@ -16,6 +16,8 @@ You understand Google apps scripts limitations.
 - All API calls from server side MUST be used UrlFetchApp (https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app).
 
 IMPORTANT: do not create READMES unless explicitly required.
+IMPORTANT: do not overengineer things
+IMPORTANT: run yarn run build to validate your changes build
 
 The client, React code is inside src/client folder
 The server side code is inside src/server. The exposed functions from the server should be declared in src/server/index.ts
