@@ -1,6 +1,6 @@
 {
   "name": "react-google-apps-script",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "description": "Starter project for using React with Google Apps Script",
   "repository": {
@@ -22,7 +22,8 @@
     "build": "tsc && vite build --mode production",
     "deploy:dev": "yarn build:dev && yarn push",
     "deploy": "echo 'Dont forget nvm use 18' && yarn build && yarn push",
-    "start": "echo 'Dont forget nvm use 18' && yarn deploy:dev && yarn dev"
+    "start": "echo 'Dont forget nvm use 18' && yarn deploy:dev && yarn dev",
+    "version:push": "./scripts/newVersionAndPushToAll.sh"
   },
   "keywords": [
     "react",
