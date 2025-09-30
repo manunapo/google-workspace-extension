@@ -265,7 +265,7 @@ function getPromptsForTool(toolId: string): Prompt[] {
 
 // Tool action button labels mapping
 const toolActionLabels: Record<string, string> = {
-  'ai-image-generator': 'Generate Images',
+  'ai-image-generator': 'Generate Image',
   'ai-gif-creator': 'Create GIF',
   'ai-headshot-generator': 'Generate Headshot',
   'ai-meme-generator': 'Create Meme',

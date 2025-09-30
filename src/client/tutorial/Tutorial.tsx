@@ -5,7 +5,7 @@ const Tutorial = () => {
         <iframe
           width="100%"
           height="100%"
-          src="https://www.youtube.com/embed/FvklW2cCdN0"
+          src="https://www.youtube.com/embed/YZ7XoTg4o10"
           title="GPT Image Generator Quickstart"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
