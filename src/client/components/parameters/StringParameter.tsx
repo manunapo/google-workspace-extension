@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Edit3, Zap } from 'lucide-react';
 import Textarea from '../ui/textarea';
+import type { OnboardingStep } from '../../hooks/useOnboarding';
 import {
   editPrompts,
   createPrompts,
@@ -23,6 +24,10 @@ interface StringParameterProps {
   disabled?: boolean;
   toolId?: string;
   onPromptSelect?: (prompt: Prompt) => void; // Callback for when a full prompt is selected
+  isOnboardingActive?: boolean;
+  onboardingStep?: OnboardingStep;
+  onSetOnboardingTarget?: (element: HTMLElement | null) => void;
+  onOnboardingNext?: (step: OnboardingStep) => void;
 }
 
 const StringParameter: React.FC<StringParameterProps> = ({
@@ -35,8 +40,15 @@ const StringParameter: React.FC<StringParameterProps> = ({
   disabled = false,
   toolId,
   onPromptSelect,
+  isOnboardingActive,
+  onboardingStep,
+  onSetOnboardingTarget,
+  onOnboardingNext,
 }) => {
   const inputId = React.useId();
+
+  // Ref for the 2nd quick start button (index 1)
+  const secondQuickStartRef = React.useRef<HTMLButtonElement>(null);
 
   // Get appropriate prompts based on tool ID
   const getPromptsForTool = (id?: string) => {
@@ -67,6 +79,27 @@ const StringParameter: React.FC<StringParameterProps> = ({
   const quickPrompts = getPromptsForTool(toolId);
   const showQuickPrompts = multiline && quickPrompts.length > 0;
 
+  // Set onboarding target when on select-quickstart step
+  React.useEffect(() => {
+    if (
+      isOnboardingActive &&
+      onboardingStep === 'select-quickstart' &&
+      toolId === 'ai-image-generator'
+    ) {
+      // Small delay to ensure the DOM is ready
+      const timeout = setTimeout(() => {
+        if (secondQuickStartRef.current) {
+          onSetOnboardingTarget?.(secondQuickStartRef.current);
+        }
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+    if (onboardingStep !== 'select-quickstart') {
+      onSetOnboardingTarget?.(null);
+    }
+    return undefined;
+  }, [isOnboardingActive, onboardingStep, toolId, onSetOnboardingTarget]);
+
   const handlePromptSelect = (selectedPrompt: Prompt) => {
     // Set the prompt text
     onChange(selectedPrompt.prompt);
@@ -74,6 +107,11 @@ const StringParameter: React.FC<StringParameterProps> = ({
     // If there's a callback for handling full prompt selection, call it
     if (onPromptSelect) {
       onPromptSelect(selectedPrompt);
+    }
+
+    // Advance onboarding if active
+    if (isOnboardingActive && onboardingStep === 'select-quickstart') {
+      onOnboardingNext?.('generate-image');
     }
   };
 
@@ -87,9 +125,10 @@ const StringParameter: React.FC<StringParameterProps> = ({
             <h3 className="text-sm font-medium text-gray-800">Quick Start</h3>
           </div>
           <div className="space-y-2">
-            {quickPrompts.map((quickPrompt) => (
+            {quickPrompts.map((quickPrompt, index) => (
               <button
                 key={quickPrompt.id}
+                ref={index === 1 ? secondQuickStartRef : undefined}
                 onClick={() => handlePromptSelect(quickPrompt)}
                 className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-purple-50 hover:border-purple-200 border border-gray-200 rounded-lg transition-all duration-200 text-left group h-12"
                 disabled={disabled}

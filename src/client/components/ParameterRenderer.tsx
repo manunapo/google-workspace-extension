@@ -8,6 +8,7 @@ import BooleanParameter from './parameters/BooleanParameter';
 import FileParameter from './parameters/FileParameter';
 import { AI_IMAGE_TOOLS } from '../../server/lib/magic-hour';
 import type { Prompt } from '../../config';
+import type { OnboardingStep } from '../hooks/useOnboarding';
 
 interface ParameterConfig {
   type: string;
@@ -32,6 +33,10 @@ interface ParameterRendererProps {
   generatedImage?: string | null;
   lastGeneratedImage?: string | null;
   onPromptSelect?: (prompt: Prompt) => void;
+  isOnboardingActive?: boolean;
+  onboardingStep?: OnboardingStep;
+  onSetOnboardingTarget?: (element: HTMLElement | null) => void;
+  onOnboardingNext?: (step: OnboardingStep) => void;
 }
 
 const ParameterRenderer: React.FC<ParameterRendererProps> = ({
@@ -44,6 +49,10 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
   generatedImage,
   lastGeneratedImage,
   onPromptSelect,
+  isOnboardingActive,
+  onboardingStep,
+  onSetOnboardingTarget,
+  onOnboardingNext,
 }) => {
   // Hide parameters that have display: false
   if (config.display === false) {
@@ -94,6 +103,10 @@ const ParameterRenderer: React.FC<ParameterRendererProps> = ({
           placeholder={placeholder}
           toolId={toolId}
           onPromptSelect={onPromptSelect}
+          isOnboardingActive={isOnboardingActive}
+          onboardingStep={onboardingStep}
+          onSetOnboardingTarget={onSetOnboardingTarget}
+          onOnboardingNext={onOnboardingNext}
         />
       );
 

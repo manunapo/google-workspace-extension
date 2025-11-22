@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { Coins, Sparkles } from 'lucide-react';
 import { Tool, Prompt } from '../../config';
+import type { OnboardingStep } from '../hooks/useOnboarding';
 import ParameterRenderer from './ParameterRenderer';
 import { Button } from './ui/button';
 import Spinner from './ui/spinner';
@@ -17,6 +18,10 @@ interface ToolPageProps {
   isExecuting: boolean;
   generatedImage?: string | null;
   lastGeneratedImage?: string | null;
+  isOnboardingActive: boolean;
+  onboardingStep: OnboardingStep;
+  onSetOnboardingTarget: (element: HTMLElement | null) => void;
+  onOnboardingNext: (step: OnboardingStep) => void;
 }
 
 // Helper function to check if URL is a webm video
@@ -168,12 +173,51 @@ const ToolPage: React.FC<ToolPageProps> = ({
   isExecuting,
   generatedImage,
   lastGeneratedImage,
+  isOnboardingActive,
+  onboardingStep,
+  onSetOnboardingTarget,
+  onOnboardingNext,
 }) => {
   const { hasEnoughCredits, getCreditsDisplay } = useUserCredits();
   const { showError } = useToast();
 
   // Ref for auto-scrolling to generated image
   const generatedImageRef = React.useRef<HTMLDivElement>(null);
+
+  // Ref for the generate button (for onboarding)
+  const generateButtonRef = React.useRef<HTMLButtonElement>(null);
+
+  // Set onboarding target when on generate-image step
+  React.useEffect(() => {
+    if (
+      isOnboardingActive &&
+      onboardingStep === 'generate-image' &&
+      generateButtonRef.current &&
+      tool.id === 'ai-image-generator'
+    ) {
+      onSetOnboardingTarget(generateButtonRef.current);
+    } else if (onboardingStep !== 'generate-image') {
+      onSetOnboardingTarget(null);
+    }
+  }, [isOnboardingActive, onboardingStep, tool.id, onSetOnboardingTarget]);
+
+  // Move to insert-download step when image is generated
+  React.useEffect(() => {
+    if (
+      isOnboardingActive &&
+      onboardingStep === 'generate-image' &&
+      generatedImage &&
+      tool.id === 'ai-image-generator'
+    ) {
+      onOnboardingNext('insert-download');
+    }
+  }, [
+    isOnboardingActive,
+    onboardingStep,
+    generatedImage,
+    tool.id,
+    onOnboardingNext,
+  ]);
 
   // Flatten the tool parameters for easier management
   const flattenedParams = React.useMemo(
@@ -506,6 +550,10 @@ const ToolPage: React.FC<ToolPageProps> = ({
               generatedImage={generatedImage}
               lastGeneratedImage={lastGeneratedImage}
               onPromptSelect={handlePromptSelect}
+              isOnboardingActive={isOnboardingActive}
+              onboardingStep={onboardingStep}
+              onSetOnboardingTarget={onSetOnboardingTarget}
+              onOnboardingNext={onOnboardingNext}
             />
           ))
         )}
@@ -515,6 +563,10 @@ const ToolPage: React.FC<ToolPageProps> = ({
           <div ref={generatedImageRef}>
             <GeneratedImageDisplay
               imageData={generatedImage || lastGeneratedImage!}
+              isOnboardingActive={isOnboardingActive}
+              onboardingStep={onboardingStep}
+              onSetOnboardingTarget={onSetOnboardingTarget}
+              onOnboardingNext={onOnboardingNext}
             />
           </div>
         )}
@@ -524,6 +576,7 @@ const ToolPage: React.FC<ToolPageProps> = ({
       <div className="py-2 px-4 bg-white border-t border-gray-200">
         <Button
           onClick={handleExecute}
+          ref={generateButtonRef}
           disabled={
             isExecuting || !isFormValid || !hasEnoughCredits(tool.credits)
           }
