@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from 'react';
 import { Coins, Sparkles } from 'lucide-react';
-import { Tool } from '../../config';
+import { Tool, Prompt } from '../../config';
 import ParameterRenderer from './ParameterRenderer';
 import { Button } from './ui/button';
 import Spinner from './ui/spinner';
@@ -9,6 +9,7 @@ import GeneratedImageDisplay from './GeneratedImageDisplay';
 import { useUserCredits } from '../hooks/useUserCredits';
 import { useToast } from '../hooks/useToast';
 import { useMediaPreloader } from '../utils/mediaPreloader';
+import { urlToFile } from '../utils/images';
 
 interface ToolPageProps {
   tool: Tool;
@@ -180,6 +181,11 @@ const ToolPage: React.FC<ToolPageProps> = ({
     [tool.parameters]
   );
 
+  // Track if we've loaded default images
+  const [defaultImagesLoaded, setDefaultImagesLoaded] = React.useState<
+    Record<string, boolean>
+  >({});
+
   // Initialize form state with default values
   const [formData, setFormData] = React.useState<Record<string, any>>(() => {
     const initialData: Record<string, any> = {};
@@ -195,6 +201,85 @@ const ToolPage: React.FC<ToolPageProps> = ({
     return initialData;
   });
 
+  // Load default images from tool configuration (only on first load)
+  React.useEffect(() => {
+    const loadDefaultImages = async () => {
+      // Get default image mapping based on tool ID
+      const getDefaultImageUrls = (): Record<string, string> => {
+        switch (tool.id) {
+          case 'gemini-ai-image-editor':
+            return {
+              referenceImage:
+                'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
+            };
+          case 'image-background-remover':
+            return {
+              'assets.image_file_path':
+                'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
+            };
+          case 'ai-headshot-generator':
+            return {
+              'assets.image_file_path':
+                'https://res.cloudinary.com/dmueochke/image/upload/v1761224303/getstyled/ai-headshot-generator/messi_before.jpg',
+            };
+          case 'face-swap-photo':
+            return {
+              'assets.source_file_path':
+                'https://res.cloudinary.com/dmueochke/image/upload/v1761226665/getstyled/ai-face-swap-photo/preset3.jpg',
+              'assets.target_file_path':
+                'https://res.cloudinary.com/dmueochke/image/upload/v1761169864/getstyled/ai-clothes-changer/lebron.jpg',
+            };
+          case 'ai-clothes-changer':
+            return {
+              'assets.person_file_path':
+                'https://res.cloudinary.com/dmueochke/image/upload/v1761169871/getstyled/ai-clothes-changer/ronaldo.jpg',
+              'assets.garment_file_path':
+                'https://res.cloudinary.com/dmueochke/image/upload/v1761169869/getstyled/ai-clothes-changer/pedro-t-shirt.jpg',
+            };
+          default:
+            return {};
+        }
+      };
+
+      const defaultImages = getDefaultImageUrls();
+
+      // Only load if this tool hasn't had defaults loaded yet
+      if (
+        Object.keys(defaultImages).length > 0 &&
+        !defaultImagesLoaded[tool.id]
+      ) {
+        // Load all default images in parallel
+        const imagePromises = Object.entries(defaultImages)
+          .filter(([key]) => !formData[key])
+          .map(async ([key, url]) => {
+            try {
+              const file = await urlToFile(url, `default-${key}.jpg`);
+              return { key, file };
+            } catch {
+              return null;
+            }
+          });
+
+        const results = await Promise.all(imagePromises);
+        const updates: Record<string, any> = {};
+
+        results.forEach((result) => {
+          if (result) {
+            updates[result.key] = result.file;
+          }
+        });
+
+        if (Object.keys(updates).length > 0) {
+          setFormData((prev) => ({ ...prev, ...updates }));
+          setDefaultImagesLoaded((prev) => ({ ...prev, [tool.id]: true }));
+        }
+      }
+    };
+
+    loadDefaultImages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tool.id]);
+
   // Update form data when tool changes
   React.useEffect(() => {
     const newFlattenedParams = flattenParameters(tool.parameters);
@@ -209,6 +294,7 @@ const ToolPage: React.FC<ToolPageProps> = ({
     });
 
     setFormData(newFormData);
+    setDefaultImagesLoaded({}); // Reset default images loaded state on tool change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tool.id]); // Only reset when tool changes
 
@@ -225,11 +311,111 @@ const ToolPage: React.FC<ToolPageProps> = ({
     }
   }, [generatedImage]);
 
-  const handleParameterChange = (key: string, value: any) => {
+  const handleParameterChange = (key: string, value: unknown) => {
     setFormData((prev) => ({
       ...prev,
       [key]: value,
     }));
+  };
+
+  // Handle quick prompt selection with multi-parameter updates
+  const handlePromptSelect = async (prompt: Prompt) => {
+    const updates: Record<string, any> = {};
+
+    // Map prompt properties to form field keys based on tool type
+    const getFieldMapping = (): Record<string, string> => {
+      switch (tool.id) {
+        case 'ai-image-generator':
+          return {
+            style: 'style.tool',
+            orientation: 'orientation',
+          };
+        case 'ai-clothes-changer':
+          return {
+            personPhoto: 'assets.person_file_path',
+            clothingItem: 'assets.garment_file_path',
+            garmentType: 'assets.garment_type',
+          };
+        case 'face-swap-photo':
+          return {
+            sourceImage: 'assets.source_file_path',
+            targetImage: 'assets.target_file_path',
+          };
+        case 'gemini-ai-image-editor':
+          return {
+            referenceImage: 'referenceImage',
+          };
+        case 'image-background-remover':
+          return {
+            referenceImage: 'assets.image_file_path',
+            backgroundImage: 'assets.background_image_file_path',
+          };
+        case 'ai-headshot-generator':
+          return {
+            referenceImage: 'assets.image_file_path',
+          };
+        case 'ai-meme-generator':
+          return {
+            template: 'style.template',
+          };
+        default:
+          return {};
+      }
+    };
+
+    const fieldMapping = getFieldMapping();
+
+    // Set non-image fields directly
+    if (prompt.style && fieldMapping.style) {
+      updates[fieldMapping.style] = prompt.style;
+    }
+    if (prompt.orientation && fieldMapping.orientation) {
+      updates[fieldMapping.orientation] = prompt.orientation;
+    }
+    if (prompt.template && fieldMapping.template) {
+      updates[fieldMapping.template] = prompt.template;
+    }
+    if (prompt.garmentType && fieldMapping.garmentType) {
+      updates[fieldMapping.garmentType] = prompt.garmentType;
+    }
+
+    // Load image files from URLs in parallel
+    const imageFields: Array<keyof Prompt> = [
+      'sourceImage',
+      'targetImage',
+      'referenceImage',
+      'personPhoto',
+      'clothingItem',
+      'backgroundImage',
+    ];
+
+    const imagePromises = imageFields
+      .filter((field) => prompt[field] && fieldMapping[field])
+      .map(async (field) => {
+        const imageUrl = prompt[field];
+        const targetField = fieldMapping[field];
+        try {
+          const file = await urlToFile(
+            imageUrl as string,
+            `preset-${field}.jpg`
+          );
+          return { targetField, file };
+        } catch {
+          return null;
+        }
+      });
+
+    const imageResults = await Promise.all(imagePromises);
+    imageResults.forEach((result) => {
+      if (result) {
+        updates[result.targetField] = result.file;
+      }
+    });
+
+    // Apply all updates
+    if (Object.keys(updates).length > 0) {
+      setFormData((prev) => ({ ...prev, ...updates }));
+    }
   };
 
   const handleExecute = async () => {
@@ -314,11 +500,12 @@ const ToolPage: React.FC<ToolPageProps> = ({
               parameterKey={key}
               config={config as any}
               value={formData[key]}
-              onChange={(value) => handleParameterChange(key, value)}
+              onChange={(value: unknown) => handleParameterChange(key, value)}
               disabled={isExecuting}
               toolId={tool.id}
               generatedImage={generatedImage}
               lastGeneratedImage={lastGeneratedImage}
+              onPromptSelect={handlePromptSelect}
             />
           ))
         )}

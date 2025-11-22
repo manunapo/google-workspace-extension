@@ -10,6 +10,7 @@ import {
   backgroundPrompts,
   faceSwapPrompts,
   clothesPrompts,
+  Prompt,
 } from '../../../config';
 
 interface StringParameterProps {
@@ -21,6 +22,7 @@ interface StringParameterProps {
   multiline?: boolean;
   disabled?: boolean;
   toolId?: string;
+  onPromptSelect?: (prompt: Prompt) => void; // Callback for when a full prompt is selected
 }
 
 const StringParameter: React.FC<StringParameterProps> = ({
@@ -32,6 +34,7 @@ const StringParameter: React.FC<StringParameterProps> = ({
   multiline = false,
   disabled = false,
   toolId,
+  onPromptSelect,
 }) => {
   const inputId = React.useId();
 
@@ -64,8 +67,14 @@ const StringParameter: React.FC<StringParameterProps> = ({
   const quickPrompts = getPromptsForTool(toolId);
   const showQuickPrompts = multiline && quickPrompts.length > 0;
 
-  const handlePromptSelect = (selectedPrompt: string) => {
-    onChange(selectedPrompt);
+  const handlePromptSelect = (selectedPrompt: Prompt) => {
+    // Set the prompt text
+    onChange(selectedPrompt.prompt);
+
+    // If there's a callback for handling full prompt selection, call it
+    if (onPromptSelect) {
+      onPromptSelect(selectedPrompt);
+    }
   };
 
   return (
@@ -81,7 +90,7 @@ const StringParameter: React.FC<StringParameterProps> = ({
             {quickPrompts.map((quickPrompt) => (
               <button
                 key={quickPrompt.id}
-                onClick={() => handlePromptSelect(quickPrompt.prompt)}
+                onClick={() => handlePromptSelect(quickPrompt)}
                 className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-purple-50 hover:border-purple-200 border border-gray-200 rounded-lg transition-all duration-200 text-left group h-12"
                 disabled={disabled}
                 type="button"
