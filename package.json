@@ -1,11 +1,11 @@
 {
-  "name": "react-google-apps-script",
-  "version": "1.1.1",
+  "name": "gpt-image-generator",
+  "version": "1.2.0",
   "type": "module",
-  "description": "Starter project for using React with Google Apps Script",
+  "description": "GPT Image Generator",
   "repository": {
     "type": "git",
-    "url": "https://github.com/enuchi/React-Google-Apps-Script.git"
+    "url": "https://github.com/manunapo/google-workspace-extension.git"
   },
   "scripts": {
     "dev": "vite",
@@ -23,7 +23,7 @@
     "deploy:dev": "yarn build:dev && yarn push",
     "deploy": "echo 'Dont forget nvm use 18' && yarn build && yarn push",
     "start": "echo 'Dont forget nvm use 18' && yarn deploy:dev && yarn dev",
-    "version:push": "./scripts/newVersionAndPushToAll.sh"
+    "deploy:all": "./scripts/newVersionAndPushToAll.sh"
   },
   "keywords": [
     "react",
@@ -32,7 +32,7 @@
     "script",
     "sheets"
   ],
-  "author": "Elisha Nuchi",
+  "author": "Manu Napo",
   "license": "MIT",
   "engines": {
     "node": ">=10.0.0",

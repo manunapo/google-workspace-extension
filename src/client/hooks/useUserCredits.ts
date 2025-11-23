@@ -6,11 +6,19 @@ import { useToast } from './useToast';
 // Database response interface (snake_case)
 interface DatabaseUserCredits {
   available_credits: number;
+  subscription_status?: string;
+  subscription_plan_id?: string;
+  stripe_subscription_id?: string;
+  current_period_end?: string;
 }
 
 // Client interface (camelCase for better UX)
 export interface UserCredits {
   availableCredits: number;
+  subscriptionStatus?: string;
+  subscriptionPlanId?: string;
+  stripeSubscriptionId?: string;
+  currentPeriodEnd?: string;
 }
 
 export interface UserCreditsState {
@@ -27,6 +35,10 @@ function convertCreditsToClientFormat(
 
   return {
     availableCredits: dbCredits.available_credits,
+    subscriptionStatus: dbCredits.subscription_status,
+    subscriptionPlanId: dbCredits.subscription_plan_id,
+    stripeSubscriptionId: dbCredits.stripe_subscription_id,
+    currentPeriodEnd: dbCredits.current_period_end,
   };
 }
 

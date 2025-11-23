@@ -5,6 +5,7 @@ import NavigationMenu from './NavigationMenu';
 import ToolPage from './ToolPage';
 import ProfilePage from './ProfilePage';
 import OnboardingOverlay from './OnboardingOverlay';
+import LowCreditsModal from './LowCreditsModal';
 import type { Tool } from '../../config';
 import { availableTools } from '../../config';
 import { useToast } from '../hooks/useToast';
@@ -13,6 +14,7 @@ import { useOnboarding } from '../hooks/useOnboarding';
 import { serverFunctions } from '../utils/serverFunctions';
 import { processImageParameters } from '../utils/images';
 import { useMediaPreloader } from '../utils/mediaPreloader';
+import { shouldShowUpsell, markUpsellShown } from '../utils/upsell';
 
 // Types for the app state
 type AppPage = 'tool' | 'profile';
@@ -34,10 +36,13 @@ const App: React.FC = () => {
   });
 
   const { showError, showSuccess } = useToast();
-  const { refreshCredits } = useUserCredits();
+  const { credits, refreshCredits } = useUserCredits(true);
   const { preloadMediaList } = useMediaPreloader();
   const { isOnboardingActive, currentStep, skipOnboarding, nextStep } =
     useOnboarding();
+
+  // Low credits modal state
+  const [showLowCreditsModal, setShowLowCreditsModal] = React.useState(false);
 
   // Refs to track onboarding target elements
   const [onboardingTargetElement, setOnboardingTargetElement] =
@@ -161,7 +166,16 @@ const App: React.FC = () => {
         }
 
         // Refresh credits after successful execution
-        refreshCredits();
+        await refreshCredits();
+
+        // Check if we should show upsell modal after image generation
+        if (credits) {
+          const remainingCredits = credits.availableCredits - tool.credits;
+          if (shouldShowUpsell(remainingCredits)) {
+            setShowLowCreditsModal(true);
+            markUpsellShown();
+          }
+        }
 
         showSuccess(`Successfully executed ${tool.name}!`);
       } catch (error) {
@@ -176,6 +190,7 @@ const App: React.FC = () => {
       showError,
       showSuccess,
       refreshCredits,
+      credits,
       setGeneratedImage,
       setLastGeneratedImage,
     ]
@@ -185,6 +200,13 @@ const App: React.FC = () => {
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Toast notifications */}
       <Toaster position="top-center" />
+
+      {/* Low Credits Modal */}
+      <LowCreditsModal
+        isOpen={showLowCreditsModal}
+        onClose={() => setShowLowCreditsModal(false)}
+        currentCredits={credits?.availableCredits || 0}
+      />
 
       {/* Onboarding Overlay */}
       {isOnboardingActive && (
@@ -230,6 +252,7 @@ const App: React.FC = () => {
             onboardingStep={currentStep}
             onSetOnboardingTarget={setOnboardingTargetElement}
             onOnboardingNext={nextStep}
+            onShowLowCreditsModal={() => setShowLowCreditsModal(true)}
           />
         )}
 

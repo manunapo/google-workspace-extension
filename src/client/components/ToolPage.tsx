@@ -22,6 +22,7 @@ interface ToolPageProps {
   onboardingStep: OnboardingStep;
   onSetOnboardingTarget: (element: HTMLElement | null) => void;
   onOnboardingNext: (step: OnboardingStep) => void;
+  onShowLowCreditsModal: () => void;
 }
 
 // Helper function to check if URL is a webm video
@@ -177,8 +178,9 @@ const ToolPage: React.FC<ToolPageProps> = ({
   onboardingStep,
   onSetOnboardingTarget,
   onOnboardingNext,
+  onShowLowCreditsModal,
 }) => {
-  const { hasEnoughCredits, getCreditsDisplay } = useUserCredits();
+  const { hasEnoughCredits } = useUserCredits();
   const { showError } = useToast();
 
   // Ref for auto-scrolling to generated image
@@ -209,8 +211,13 @@ const ToolPage: React.FC<ToolPageProps> = ({
       generatedImage &&
       tool.id === 'ai-image-generator'
     ) {
-      onOnboardingNext('insert-download');
+      // Delay to allow GeneratedImageDisplay to mount
+      const timeout = setTimeout(() => {
+        onOnboardingNext('insert-download');
+      }, 150);
+      return () => clearTimeout(timeout);
     }
+    return undefined;
   }, [
     isOnboardingActive,
     onboardingStep,
@@ -465,11 +472,7 @@ const ToolPage: React.FC<ToolPageProps> = ({
   const handleExecute = async () => {
     // Check if user has enough credits
     if (!hasEnoughCredits(tool.credits)) {
-      showError(
-        `Insufficient credits. This tool requires ${
-          tool.credits
-        } credits, but you only have ${getCreditsDisplay()}.`
-      );
+      onShowLowCreditsModal();
       return;
     }
 
@@ -577,9 +580,7 @@ const ToolPage: React.FC<ToolPageProps> = ({
         <Button
           onClick={handleExecute}
           ref={generateButtonRef}
-          disabled={
-            isExecuting || !isFormValid || !hasEnoughCredits(tool.credits)
-          }
+          disabled={isExecuting || !isFormValid}
           className="w-full h-12 text-base font-medium bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 shadow-lg"
         >
           {isExecuting ? (
@@ -599,13 +600,6 @@ const ToolPage: React.FC<ToolPageProps> = ({
             </div>
           )}
         </Button>
-
-        {!hasEnoughCredits(tool.credits) && (
-          <p className="text-xs text-red-600 mt-2 text-center">
-            Insufficient credits. You have {getCreditsDisplay()}, but need{' '}
-            {tool.credits}.
-          </p>
-        )}
       </div>
     </div>
   );

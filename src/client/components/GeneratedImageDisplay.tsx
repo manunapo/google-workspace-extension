@@ -31,15 +31,19 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
 
   // Set onboarding target when on insert-download step
   React.useEffect(() => {
-    if (
-      isOnboardingActive &&
-      onboardingStep === 'insert-download' &&
-      insertButtonRef.current
-    ) {
-      onSetOnboardingTarget?.(insertButtonRef.current);
-    } else if (onboardingStep !== 'insert-download') {
+    if (isOnboardingActive && onboardingStep === 'insert-download') {
+      // Small delay to ensure the DOM is ready
+      const timeout = setTimeout(() => {
+        if (insertButtonRef.current) {
+          onSetOnboardingTarget?.(insertButtonRef.current);
+        }
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+    if (onboardingStep !== 'insert-download') {
       onSetOnboardingTarget?.(null);
     }
+    return undefined;
   }, [isOnboardingActive, onboardingStep, onSetOnboardingTarget]);
 
   // Utility function to get file extension from MIME type

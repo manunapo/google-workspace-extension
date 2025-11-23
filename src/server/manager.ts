@@ -19,6 +19,10 @@ import {
   uploadImageToCloudinary,
 } from './lib/cloudinary';
 import { DEFAULT_REVIEW_CREDITS } from '../constants';
+import {
+  createCheckoutSession,
+  createBillingPortalSession,
+} from './lib/getstyled';
 
 /**
  * Higher-order function that wraps a function with user ID authentication
@@ -39,11 +43,9 @@ function withUserIdAuth<T extends unknown[], R>(
   };
 }
 
-export const getUserCredits = withUserIdAuth(
-  (email: string): Pick<User, 'available_credits'> => {
-    return getOrCreateDbUser(email);
-  }
-);
+export const getUserCredits = withUserIdAuth((email: string): User => {
+  return getOrCreateDbUser(email);
+});
 
 export const checkReviewCreditsStatus = withUserIdAuth(
   (email: string): { canClaim: boolean } => {
@@ -234,6 +236,105 @@ export const grantReviewCredits = withUserIdAuth(
           error instanceof Error ? error.message : 'Unknown error'
         }`
       );
+    }
+  }
+);
+
+// Purchase credits via Stripe checkout
+export const purchaseCredits = withUserIdAuth(
+  (
+    email: string,
+    credits: number
+  ): { success: boolean; checkoutUrl?: string; error?: string } => {
+    // Ensure user exists
+    const user = getOrCreateDbUser(email);
+
+    try {
+      // Create checkout session
+      const result = createCheckoutSession(email, credits);
+
+      if (result.success) {
+        // Log PURCHASE_CREDITS_INITIATED activity
+        logActivity(
+          user.id,
+          'PURCHASE_CREDITS_INITIATED',
+          `User initiated purchase of ${credits} credits`
+        );
+      } else {
+        // Log failed attempt
+        logActivity(
+          user.id,
+          'PURCHASE_CREDITS_FAILED',
+          `Failed to initiate purchase: ${result.error}`
+        );
+      }
+
+      return result;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      console.error('Failed to purchase credits:', error);
+
+      // Log failed attempt
+      logActivity(
+        user.id,
+        'PURCHASE_CREDITS_FAILED',
+        `Failed to initiate purchase: ${errorMessage}`
+      );
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+  }
+);
+
+// Open billing portal for subscription management
+export const openBillingPortal = withUserIdAuth(
+  (email: string): { success: boolean; portalUrl?: string; error?: string } => {
+    // Ensure user exists
+    const user = getOrCreateDbUser(email);
+
+    try {
+      // Create billing portal session
+      const result = createBillingPortalSession(email);
+
+      if (result.success) {
+        // Log BILLING_PORTAL_OPENED activity
+        logActivity(
+          user.id,
+          'BILLING_PORTAL_OPENED',
+          'User opened billing portal'
+        );
+      } else {
+        // Log failed attempt
+        logActivity(
+          user.id,
+          'BILLING_PORTAL_FAILED',
+          `Failed to open billing portal: ${result.error}`
+        );
+      }
+
+      return result;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      console.error('Failed to open billing portal:', error);
+
+      // Log failed attempt
+      logActivity(
+        user.id,
+        'BILLING_PORTAL_FAILED',
+        `Failed to open billing portal: ${errorMessage}`
+      );
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
     }
   }
 );
