@@ -2,6 +2,7 @@ import * as React from 'react';
 import { User, Sparkles } from 'lucide-react';
 import { availableTools } from '../../config';
 import type { Tool } from '../../config';
+import type { OnboardingStep } from '../hooks/useOnboarding';
 import AppHeader from './AppHeader';
 import TutorialBanner from './TutorialBanner';
 
@@ -10,6 +11,9 @@ interface NavigationMenuProps {
   onClose: () => void;
   onToolSelect: (tool: Tool) => void;
   onProfileSelect: () => void;
+  isOnboardingActive: boolean;
+  onboardingStep: OnboardingStep;
+  onSetOnboardingTarget: (element: HTMLElement | null) => void;
 }
 
 const NavigationMenu: React.FC<NavigationMenuProps> = ({
@@ -17,7 +21,28 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
   onClose,
   onToolSelect,
   onProfileSelect,
+  isOnboardingActive,
+  onboardingStep,
+  onSetOnboardingTarget,
 }) => {
+  // Ref for AI Image Generator button (for onboarding)
+  const aiImageGeneratorRef = React.useRef<HTMLButtonElement>(null);
+
+  // Set onboarding target when needed
+  React.useEffect(() => {
+    if (
+      isOnboardingActive &&
+      onboardingStep === 'select-tool' &&
+      isOpen &&
+      aiImageGeneratorRef.current
+    ) {
+      onSetOnboardingTarget(aiImageGeneratorRef.current);
+    } else if (!isOpen || onboardingStep !== 'select-tool') {
+      // Clear target when menu closes or step changes
+      onSetOnboardingTarget(null);
+    }
+  }, [isOnboardingActive, onboardingStep, isOpen, onSetOnboardingTarget]);
+
   if (!isOpen) return null;
 
   const handleToolClick = (tool: Tool) => {
@@ -82,6 +107,11 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
               {availableTools.map((tool) => (
                 <button
                   key={tool.id}
+                  ref={
+                    tool.id === 'ai-image-generator'
+                      ? aiImageGeneratorRef
+                      : undefined
+                  }
                   onClick={() => handleToolClick(tool)}
                   className="w-full flex items-center p-3 hover:scale-105 hover:bg-blue-50 rounded-lg transition-all duration-200 text-left relative border border-transparent hover:border-blue-200 hover:shadow-sm"
                 >

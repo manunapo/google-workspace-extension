@@ -197,6 +197,16 @@ export const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
+// Utility function to convert URL to File
+export const urlToFile = async (
+  url: string,
+  filename: string
+): Promise<File> => {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new File([blob], filename, { type: blob.type || 'image/jpeg' });
+};
+
 // Single function to process all image parameters in one pass
 export const processImageParameters = async (
   toolParameters: Record<string, unknown>,

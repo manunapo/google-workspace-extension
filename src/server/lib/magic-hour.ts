@@ -239,8 +239,8 @@ export const MAGIC_HOUR_TOOLS = {
         },
         source_file_path: {
           type: 'image_url',
-          required: false,
-          label: 'Source Face (Optional)',
+          required: true,
+          label: 'Source Face',
           placeholder: 'Upload photo with face to copy from',
         },
         face_swap_mode: {
@@ -276,7 +276,7 @@ export const MAGIC_HOUR_TOOLS = {
           values: ['upper_body', 'lower_body', 'full_body'],
           required: true,
           label: 'Clothing Type',
-          placeholder: 'What part of outfit to change',
+          default: 'upper_body',
         },
       },
     },

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Download, FileImage, Sparkles } from 'lucide-react';
+import type { OnboardingStep } from '../hooks/useOnboarding';
 import { Button } from './ui/button';
 import { serverFunctions } from '../utils/serverFunctions';
 import { useToast } from '../hooks/useToast';
@@ -8,14 +9,42 @@ import { resizeImageForSheets } from '../utils/images';
 interface GeneratedImageDisplayProps {
   imageData: string;
   className?: string;
+  isOnboardingActive?: boolean;
+  onboardingStep?: OnboardingStep;
+  onSetOnboardingTarget?: (element: HTMLElement | null) => void;
+  onOnboardingNext?: (step: OnboardingStep) => void;
 }
 
 const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
   imageData,
   className,
+  isOnboardingActive,
+  onboardingStep,
+  onSetOnboardingTarget,
+  onOnboardingNext,
 }) => {
   const { showSuccess, showError } = useToast();
   const [isInserting, setIsInserting] = React.useState(false);
+
+  // Refs for onboarding
+  const insertButtonRef = React.useRef<HTMLButtonElement>(null);
+
+  // Set onboarding target when on insert-download step
+  React.useEffect(() => {
+    if (isOnboardingActive && onboardingStep === 'insert-download') {
+      // Small delay to ensure the DOM is ready
+      const timeout = setTimeout(() => {
+        if (insertButtonRef.current) {
+          onSetOnboardingTarget?.(insertButtonRef.current);
+        }
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+    if (onboardingStep !== 'insert-download') {
+      onSetOnboardingTarget?.(null);
+    }
+    return undefined;
+  }, [isOnboardingActive, onboardingStep, onSetOnboardingTarget]);
 
   // Utility function to get file extension from MIME type
   const getFileExtension = (dataUrl: string): string => {
@@ -27,6 +56,11 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
   };
 
   const handleDownload = () => {
+    // Complete onboarding if active
+    if (isOnboardingActive && onboardingStep === 'insert-download') {
+      onOnboardingNext?.('complete');
+    }
+
     try {
       const fileExtension = getFileExtension(imageData);
 
@@ -46,6 +80,11 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
   };
 
   const handleInsertToDocument = async () => {
+    // Complete onboarding if active
+    if (isOnboardingActive && onboardingStep === 'insert-download') {
+      onOnboardingNext?.('complete');
+    }
+
     try {
       setIsInserting(true);
 
@@ -85,6 +124,7 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
         <div className="flex gap-2 mt-4">
           <Button
             onClick={handleInsertToDocument}
+            ref={insertButtonRef}
             disabled={isInserting}
             className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium"
           >

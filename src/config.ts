@@ -4,6 +4,17 @@ export interface Prompt {
   id: string;
   label: string;
   prompt: string;
+  // Optional additional configurations that will be set when prompt is selected
+  style?: string; // For tools that have a style/tool selection
+  orientation?: string; // For image orientation
+  template?: string; // For meme templates
+  garmentType?: string; // For clothes changer
+  sourceImage?: string; // Default source image URL
+  targetImage?: string; // Default target image URL
+  referenceImage?: string; // Default reference image URL
+  personPhoto?: string; // Default person photo URL
+  clothingItem?: string; // Default clothing item URL
+  backgroundImage?: string; // Default background image URL
 }
 
 export const createPrompts: Prompt[] = [
@@ -12,24 +23,32 @@ export const createPrompts: Prompt[] = [
     label: 'AI Logo Generator',
     prompt:
       'Modern minimalist logo for ACME company, clean typography, simple icon, professional black and white design.',
+    style: 'ai-logo-generator',
+    orientation: 'square',
   },
   {
     id: 'ai-background-generator',
     label: 'AI Background Generator',
     prompt:
       'Subtle gradient background, soft blue to white, minimal texture, perfect for presentations.',
+    style: 'ai-background-generator',
+    orientation: 'landscape',
   },
   {
     id: 'ai-tattoo-generator',
     label: 'AI Tattoo Generator',
     prompt:
       'Traditional rose tattoo design, bold black lines, detailed shading, classic American traditional style.',
+    style: 'ai-tattoo-generator',
+    orientation: 'portrait',
   },
   {
     id: 'architecture-generator',
     label: 'Architecture Generator',
     prompt:
       'Modern glass office building, clean lines, large windows, urban setting, contemporary architecture.',
+    style: 'architecture-generator',
+    orientation: 'landscape',
   },
 ];
 
@@ -39,23 +58,31 @@ export const editPrompts: Prompt[] = [
     label: 'Add Text Badge',
     prompt:
       'Add a modern text pill or badge overlay to this image. Make it 1/4 of the image size. The text should be contained in a rounded rectangle with a clean design, positioned prominently. The text should be "Watch This!"',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
   },
   {
     id: 'change-color',
     label: 'Change Color',
     prompt:
       'Change the color of the image to a more vibrant and exciting red color.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
   },
   {
     id: 'add-glasses',
     label: 'Give him glasses',
     prompt: 'Give him sunglasses.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
   },
   {
     id: '3d-pixar-style',
     label: '3D Pixar Style',
     prompt:
       'Transform this image into a 3D Pixar style image. Make it look like a Pixar movie.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
   },
 ];
 
@@ -92,24 +119,32 @@ export const headshotPrompts: Prompt[] = [
     label: 'Professional Business',
     prompt:
       'Professional business headshot with formal attire, clean background, and confident expression.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761224303/getstyled/ai-headshot-generator/messi_before.jpg',
   },
   {
     id: 'creative-professional',
     label: 'Creative Professional',
     prompt:
       'Creative professional headshot with artistic flair, modern styling, and approachable expression.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761224303/getstyled/ai-headshot-generator/messi_before.jpg',
   },
   {
     id: 'corporate-executive',
     label: 'Corporate Executive',
     prompt:
       'Corporate executive headshot with premium suit, sophisticated lighting, and authoritative presence.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761224303/getstyled/ai-headshot-generator/messi_before.jpg',
   },
   {
     id: 'linkedin-profile',
     label: 'LinkedIn Profile',
     prompt:
       'LinkedIn-ready professional headshot with clean background, business casual attire, and friendly smile.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761224303/getstyled/ai-headshot-generator/messi_before.jpg',
   },
 ];
 
@@ -142,24 +177,32 @@ export const backgroundPrompts: Prompt[] = [
     label: 'Studio Background',
     prompt:
       'Replace with a professional studio background with clean, neutral colors and professional lighting.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
   },
   {
     id: 'nature-background',
     label: 'Nature Background',
     prompt:
       'Replace with a beautiful nature background featuring mountains, forests, or scenic landscapes.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
   },
   {
     id: 'office-background',
     label: 'Office Background',
     prompt:
       'Replace with a modern office background with clean, professional workspace elements.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
   },
   {
     id: 'remove-only',
     label: 'Remove Only',
     prompt:
       'Remove the background completely, creating a transparent or clean white background.',
+    referenceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
   },
 ];
 
@@ -169,24 +212,40 @@ export const faceSwapPrompts: Prompt[] = [
     label: 'Family Photo',
     prompt:
       'Seamlessly swap faces in a family photo while maintaining natural lighting and expressions.',
+    sourceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761226665/getstyled/ai-face-swap-photo/preset3.jpg',
+    targetImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169864/getstyled/ai-clothes-changer/lebron.jpg',
   },
   {
     id: 'group-friends',
     label: 'Group of Friends',
     prompt:
       'Swap faces among friends in a group photo with consistent skin tone and facial features.',
+    sourceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761226665/getstyled/ai-face-swap-photo/preset3.jpg',
+    targetImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169864/getstyled/ai-clothes-changer/lebron.jpg',
   },
   {
     id: 'professional-swap',
     label: 'Professional Photo',
     prompt:
       'Face swap in a professional setting while maintaining the formal atmosphere and quality.',
+    sourceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761226665/getstyled/ai-face-swap-photo/preset3.jpg',
+    targetImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169864/getstyled/ai-clothes-changer/lebron.jpg',
   },
   {
     id: 'fun-creative',
     label: 'Creative Fun',
     prompt:
       'Creative face swap for entertainment purposes with playful and fun results.',
+    sourceImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761226665/getstyled/ai-face-swap-photo/preset3.jpg',
+    targetImage:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169864/getstyled/ai-clothes-changer/lebron.jpg',
   },
 ];
 
@@ -196,24 +255,44 @@ export const clothesPrompts: Prompt[] = [
     label: 'Business Attire',
     prompt:
       'Change to professional business attire including suit, dress shirt, and formal accessories.',
+    personPhoto:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
+    clothingItem:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169869/getstyled/ai-clothes-changer/pedro-t-shirt.jpg',
+    garmentType: 'upper_body',
   },
   {
     id: 'casual-style',
     label: 'Casual Style',
     prompt:
       'Change to casual clothing like jeans, t-shirt, and comfortable everyday wear.',
+    personPhoto:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
+    clothingItem:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169869/getstyled/ai-clothes-changer/pedro-t-shirt.jpg',
+    garmentType: 'upper_body',
   },
   {
     id: 'formal-evening',
     label: 'Formal Evening',
     prompt:
       'Change to elegant formal evening wear suitable for special occasions and events.',
+    personPhoto:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
+    clothingItem:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169869/getstyled/ai-clothes-changer/pedro-t-shirt.jpg',
+    garmentType: 'full_body',
   },
   {
     id: 'seasonal-outfit',
     label: 'Seasonal Outfit',
     prompt:
       'Change to season-appropriate clothing like winter coats, summer dresses, or spring jackets.',
+    personPhoto:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169868/getstyled/ai-clothes-changer/obama.jpg',
+    clothingItem:
+      'https://res.cloudinary.com/dmueochke/image/upload/v1761169869/getstyled/ai-clothes-changer/pedro-t-shirt.jpg',
+    garmentType: 'upper_body',
   },
 ];
 

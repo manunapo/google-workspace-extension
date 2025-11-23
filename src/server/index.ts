@@ -5,6 +5,8 @@ import {
   uploadImageAndGetUrl,
   grantReviewCredits,
   checkReviewCreditsStatus,
+  purchaseCredits,
+  openBillingPortal,
 } from './manager';
 import getUserEmail from './session';
 import {
@@ -33,4 +35,6 @@ export {
   uploadImageAndGetUrl,
   grantReviewCredits,
   checkReviewCreditsStatus,
+  purchaseCredits,
+  openBillingPortal,
 };

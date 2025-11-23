@@ -10,6 +10,10 @@ export interface User {
   updated_at: string;
   deleted_at?: string;
   stripe_customer_id?: string;
+  stripe_subscription_id?: string;
+  subscription_status?: string;
+  subscription_plan_id?: string;
+  current_period_end?: string;
   available_credits: number;
   total_purchased_credits: number;
   last_purchase_date?: string;

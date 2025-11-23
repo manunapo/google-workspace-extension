@@ -4,13 +4,17 @@ import AppHeader from './AppHeader';
 import NavigationMenu from './NavigationMenu';
 import ToolPage from './ToolPage';
 import ProfilePage from './ProfilePage';
+import OnboardingOverlay from './OnboardingOverlay';
+import LowCreditsModal from './LowCreditsModal';
 import type { Tool } from '../../config';
 import { availableTools } from '../../config';
 import { useToast } from '../hooks/useToast';
 import { useUserCredits } from '../hooks/useUserCredits';
+import { useOnboarding } from '../hooks/useOnboarding';
 import { serverFunctions } from '../utils/serverFunctions';
 import { processImageParameters } from '../utils/images';
 import { useMediaPreloader } from '../utils/mediaPreloader';
+import { shouldShowUpsell, markUpsellShown } from '../utils/upsell';
 
 // Types for the app state
 type AppPage = 'tool' | 'profile';
@@ -32,8 +36,17 @@ const App: React.FC = () => {
   });
 
   const { showError, showSuccess } = useToast();
-  const { refreshCredits } = useUserCredits();
+  const { credits, refreshCredits } = useUserCredits(true);
   const { preloadMediaList } = useMediaPreloader();
+  const { isOnboardingActive, currentStep, skipOnboarding, nextStep } =
+    useOnboarding();
+
+  // Low credits modal state
+  const [showLowCreditsModal, setShowLowCreditsModal] = React.useState(false);
+
+  // Refs to track onboarding target elements
+  const [onboardingTargetElement, setOnboardingTargetElement] =
+    React.useState<HTMLElement | null>(null);
 
   // Generated image state
   const [generatedImage, setGeneratedImage] = React.useState<string | null>(
@@ -65,14 +78,29 @@ const App: React.FC = () => {
   }, [preloadMediaList]);
 
   // Handle navigation actions
-  const navigateToTool = React.useCallback((tool: Tool) => {
-    setState((prev) => ({
-      ...prev,
-      currentPage: 'tool',
-      currentTool: tool,
-      isMenuOpen: false,
-    }));
-  }, []);
+  const navigateToTool = React.useCallback(
+    (tool: Tool) => {
+      setState((prev) => ({
+        ...prev,
+        currentPage: 'tool',
+        currentTool: tool,
+        isMenuOpen: false,
+      }));
+
+      // If onboarding is active and user selected AI Image Generator, move to next step
+      if (
+        isOnboardingActive &&
+        currentStep === 'select-tool' &&
+        tool.id === 'ai-image-generator'
+      ) {
+        // Delay to allow the ToolPage to mount
+        setTimeout(() => {
+          nextStep('select-quickstart');
+        }, 100);
+      }
+    },
+    [isOnboardingActive, currentStep, nextStep]
+  );
 
   const navigateToProfile = React.useCallback(() => {
     setState((prev) => ({
@@ -87,7 +115,17 @@ const App: React.FC = () => {
       ...prev,
       isMenuOpen: !prev.isMenuOpen,
     }));
-  }, []);
+
+    // If onboarding is active and user is going back to menu from a tool
+    // Reset to select-tool step
+    if (
+      isOnboardingActive &&
+      currentStep !== 'select-tool' &&
+      currentStep !== 'select-quickstart'
+    ) {
+      nextStep('select-tool');
+    }
+  }, [isOnboardingActive, currentStep, nextStep]);
 
   const closeMenu = React.useCallback(() => {
     setState((prev) => ({
@@ -128,7 +166,16 @@ const App: React.FC = () => {
         }
 
         // Refresh credits after successful execution
-        refreshCredits();
+        await refreshCredits();
+
+        // Check if we should show upsell modal after image generation
+        if (credits) {
+          const remainingCredits = credits.availableCredits - tool.credits;
+          if (shouldShowUpsell(remainingCredits)) {
+            setShowLowCreditsModal(true);
+            markUpsellShown();
+          }
+        }
 
         showSuccess(`Successfully executed ${tool.name}!`);
       } catch (error) {
@@ -143,6 +190,7 @@ const App: React.FC = () => {
       showError,
       showSuccess,
       refreshCredits,
+      credits,
       setGeneratedImage,
       setLastGeneratedImage,
     ]
@@ -152,6 +200,22 @@ const App: React.FC = () => {
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Toast notifications */}
       <Toaster position="top-center" />
+
+      {/* Low Credits Modal */}
+      <LowCreditsModal
+        isOpen={showLowCreditsModal}
+        onClose={() => setShowLowCreditsModal(false)}
+        currentCredits={credits?.availableCredits || 0}
+      />
+
+      {/* Onboarding Overlay */}
+      {isOnboardingActive && (
+        <OnboardingOverlay
+          step={currentStep}
+          targetElement={onboardingTargetElement}
+          onSkip={skipOnboarding}
+        />
+      )}
 
       {/* Header - Always visible */}
       <AppHeader
@@ -168,6 +232,9 @@ const App: React.FC = () => {
         onClose={closeMenu}
         onToolSelect={navigateToTool}
         onProfileSelect={navigateToProfile}
+        isOnboardingActive={isOnboardingActive}
+        onboardingStep={currentStep}
+        onSetOnboardingTarget={setOnboardingTargetElement}
       />
 
       {/* Main Content Area */}
@@ -181,6 +248,11 @@ const App: React.FC = () => {
             isExecuting={state.isExecuting}
             generatedImage={generatedImage}
             lastGeneratedImage={lastGeneratedImage}
+            isOnboardingActive={isOnboardingActive}
+            onboardingStep={currentStep}
+            onSetOnboardingTarget={setOnboardingTargetElement}
+            onOnboardingNext={nextStep}
+            onShowLowCreditsModal={() => setShowLowCreditsModal(true)}
           />
         )}
 

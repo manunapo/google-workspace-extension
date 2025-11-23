@@ -26,6 +26,8 @@ const FileParameter: React.FC<FileParameterProps> = ({
   lastGeneratedImage,
 }) => {
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+  const [isHovering, setIsHovering] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Generate preview URL when file changes
   React.useEffect(() => {
@@ -89,7 +91,11 @@ const FileParameter: React.FC<FileParameterProps> = ({
 
             {/* Show preview if available */}
             {previewUrl && (
-              <div className="mb-3">
+              <div
+                className="mb-3 relative group"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+              >
                 <img
                   src={previewUrl}
                   alt="Preview"
@@ -98,6 +104,28 @@ const FileParameter: React.FC<FileParameterProps> = ({
                     maxHeight: '200px',
                     objectFit: 'contain',
                   }}
+                />
+                {/* Hover overlay with Replace button */}
+                {isHovering && !disabled && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center transition-opacity">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-4 py-2 bg-white text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                      type="button"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Replace Image
+                    </button>
+                  </div>
+                )}
+                {/* Hidden file input for replace functionality */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={accept}
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={disabled}
                 />
               </div>
             )}
