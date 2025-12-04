@@ -204,7 +204,7 @@ export const MAGIC_HOUR_TOOLS = {
     },
   },
   'image-background-remover': {
-    name: 'AI Image Background Remover',
+    name: 'AI Background Remover',
     endpoint: '/v1/image-background-remover',
     credits: 5,
     parameters: {

@@ -43,6 +43,8 @@ const App: React.FC = () => {
 
   // Low credits modal state
   const [showLowCreditsModal, setShowLowCreditsModal] = React.useState(false);
+  const [canClaimReviewCredits, setCanClaimReviewCredits] =
+    React.useState<boolean>(false);
 
   // Refs to track onboarding target elements
   const [onboardingTargetElement, setOnboardingTargetElement] =
@@ -55,6 +57,21 @@ const App: React.FC = () => {
   const [lastGeneratedImage, setLastGeneratedImage] = React.useState<
     string | null
   >(null);
+
+  // Check review credits status on app start
+  React.useEffect(() => {
+    const checkReviewCreditsStatus = async () => {
+      try {
+        const status = await serverFunctions.checkReviewCreditsStatus();
+        setCanClaimReviewCredits(status.canClaim);
+      } catch (err) {
+        // Assume they can claim if check fails
+        setCanClaimReviewCredits(true);
+      }
+    };
+
+    checkReviewCreditsStatus();
+  }, []);
 
   // Preload all tool thumbnails on app start
   React.useEffect(() => {
@@ -87,11 +104,11 @@ const App: React.FC = () => {
         isMenuOpen: false,
       }));
 
-      // If onboarding is active and user selected AI Image Generator, move to next step
+      // If onboarding is active and user selected AI Image Editor, move to next step
       if (
         isOnboardingActive &&
         currentStep === 'select-tool' &&
-        tool.id === 'ai-image-generator'
+        tool.id === 'gemini-ai-image-editor'
       ) {
         // Delay to allow the ToolPage to mount
         setTimeout(() => {
@@ -206,6 +223,9 @@ const App: React.FC = () => {
         isOpen={showLowCreditsModal}
         onClose={() => setShowLowCreditsModal(false)}
         currentCredits={credits?.availableCredits || 0}
+        onNavigateToSettings={
+          canClaimReviewCredits ? navigateToProfile : undefined
+        }
       />
 
       {/* Onboarding Overlay */}

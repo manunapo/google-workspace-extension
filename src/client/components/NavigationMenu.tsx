@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { User, Sparkles } from 'lucide-react';
+import { User, Sparkles, Coins } from 'lucide-react';
 import { availableTools } from '../../config';
 import type { Tool } from '../../config';
 import type { OnboardingStep } from '../hooks/useOnboarding';
+import { useUserCredits } from '../hooks/useUserCredits';
 import AppHeader from './AppHeader';
 import TutorialBanner from './TutorialBanner';
 
@@ -25,8 +26,11 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
   onboardingStep,
   onSetOnboardingTarget,
 }) => {
-  // Ref for AI Image Generator button (for onboarding)
-  const aiImageGeneratorRef = React.useRef<HTMLButtonElement>(null);
+  // Ref for AI Image Editor button (for onboarding)
+  const aiImageEditorRef = React.useRef<HTMLButtonElement>(null);
+
+  // Get user credits to check if they can afford tools
+  const { hasEnoughCredits, loading: creditsLoading } = useUserCredits(true);
 
   // Set onboarding target when needed
   React.useEffect(() => {
@@ -34,9 +38,9 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
       isOnboardingActive &&
       onboardingStep === 'select-tool' &&
       isOpen &&
-      aiImageGeneratorRef.current
+      aiImageEditorRef.current
     ) {
-      onSetOnboardingTarget(aiImageGeneratorRef.current);
+      onSetOnboardingTarget(aiImageEditorRef.current);
     } else if (!isOpen || onboardingStep !== 'select-tool') {
       // Clear target when menu closes or step changes
       onSetOnboardingTarget(null);
@@ -108,18 +112,23 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
                 <button
                   key={tool.id}
                   ref={
-                    tool.id === 'ai-image-generator'
-                      ? aiImageGeneratorRef
+                    tool.id === 'gemini-ai-image-editor'
+                      ? aiImageEditorRef
                       : undefined
                   }
                   onClick={() => handleToolClick(tool)}
                   className="w-full flex items-center p-3 hover:scale-105 hover:bg-blue-50 rounded-lg transition-all duration-200 text-left relative border border-transparent hover:border-blue-200 hover:shadow-sm"
                 >
-                  {tool.isNew && (
-                    <span className="absolute top-0 right-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-medium text-green-600">
-                      New
-                    </span>
-                  )}
+                  <span
+                    className={`absolute top-1 right-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
+                      creditsLoading || hasEnoughCredits(tool.credits)
+                        ? 'text-green-600 bg-green-50'
+                        : 'text-red-600 bg-red-50'
+                    }`}
+                  >
+                    <Coins className="h-3 w-3" />
+                    {creditsLoading ? '..' : tool.credits}
+                  </span>
                   <div className="flex w-full items-center space-x-2">
                     <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200">
                       <Sparkles className="h-5 w-5 text-blue-600" />

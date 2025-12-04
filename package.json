@@ -1,6 +1,6 @@
 {
   "name": "gpt-image-generator",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "description": "GPT Image Generator",
   "repository": {

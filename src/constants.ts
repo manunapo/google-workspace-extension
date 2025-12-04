@@ -1,5 +1,5 @@
 export const EXTENSION_NAME = 'GPT Image Generator';
-export const VERSION = '1.2.0';
+export const VERSION = '1.2.1';
 export const OPENAI_API_KEY = 'OPENAI_API_KEY';
 export const GEMINI_API_KEY = 'GEMINI_API_KEY';
 export const CLOUDINARY_CLOUD_NAME = 'CLOUDINARY_CLOUD_NAME';

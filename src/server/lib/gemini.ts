@@ -15,9 +15,7 @@ export async function generateGeminiImage(
   temperature = 0.7
 ): Promise<string> {
   try {
-    console.log(
-      'Generating image with Google Gemini gemini-2.5-flash-image-preview'
-    );
+    console.log('Generating image with Google Gemini gemini-2.5-flash-image');
     console.log('Prompt:', prompt);
     console.log('Temperature:', temperature);
 
@@ -69,7 +67,7 @@ export async function generateGeminiImage(
 
     // Gemini API endpoint for the specified model
     const endpoint =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent';
 
     // Make the API request
     const response = UrlFetchApp.fetch(endpoint, {

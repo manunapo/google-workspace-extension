@@ -195,7 +195,7 @@ const ToolPage: React.FC<ToolPageProps> = ({
       isOnboardingActive &&
       onboardingStep === 'generate-image' &&
       generateButtonRef.current &&
-      tool.id === 'ai-image-generator'
+      tool.id === 'gemini-ai-image-editor'
     ) {
       onSetOnboardingTarget(generateButtonRef.current);
     } else if (onboardingStep !== 'generate-image') {
@@ -209,7 +209,7 @@ const ToolPage: React.FC<ToolPageProps> = ({
       isOnboardingActive &&
       onboardingStep === 'generate-image' &&
       generatedImage &&
-      tool.id === 'ai-image-generator'
+      tool.id === 'gemini-ai-image-editor'
     ) {
       // Delay to allow GeneratedImageDisplay to mount
       const timeout = setTimeout(() => {

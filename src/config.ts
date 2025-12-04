@@ -404,7 +404,7 @@ const geminiImageEditorTool: Tool = {
   id: 'gemini-ai-image-editor',
   name: 'AI Image Editor',
   description: 'Edit and transform images using AI',
-  credits: 25,
+  credits: 20,
   parameters: {
     name: {
       type: 'string',

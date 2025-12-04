@@ -17,20 +17,20 @@ interface StepConfig {
 
 const STEP_CONFIG: Record<OnboardingStep, StepConfig | null> = {
   'select-tool': {
-    title: 'Select AI Image Generator',
-    description: 'Click here to start creating AI images',
+    title: 'Select AI Image Editor',
+    description: 'Click here to start editing images with AI',
     position: 'right',
     offset: { x: 16, y: -108 },
   },
   'select-quickstart': {
-    title: 'Try a Quick Start',
-    description: 'Click this preset to get started quickly',
+    title: 'Try Add Text Badge',
+    description: 'Click this preset to add a text badge to an image',
     position: 'right',
     offset: { x: 16, y: -90 },
   },
   'generate-image': {
-    title: 'Generate Your Image',
-    description: 'Click to create your first AI image',
+    title: 'Edit Your Image',
+    description: 'Click to edit your first image with AI',
     position: 'top',
     offset: { x: 0, y: -16 },
   },

@@ -47,8 +47,8 @@ const StringParameter: React.FC<StringParameterProps> = ({
 }) => {
   const inputId = React.useId();
 
-  // Ref for the 2nd quick start button (index 1)
-  const secondQuickStartRef = React.useRef<HTMLButtonElement>(null);
+  // Ref for the 1st quick start button (index 0)
+  const firstQuickStartRef = React.useRef<HTMLButtonElement>(null);
 
   // Get appropriate prompts based on tool ID
   const getPromptsForTool = (id?: string) => {
@@ -84,12 +84,12 @@ const StringParameter: React.FC<StringParameterProps> = ({
     if (
       isOnboardingActive &&
       onboardingStep === 'select-quickstart' &&
-      toolId === 'ai-image-generator'
+      toolId === 'gemini-ai-image-editor'
     ) {
       // Small delay to ensure the DOM is ready
       const timeout = setTimeout(() => {
-        if (secondQuickStartRef.current) {
-          onSetOnboardingTarget?.(secondQuickStartRef.current);
+        if (firstQuickStartRef.current) {
+          onSetOnboardingTarget?.(firstQuickStartRef.current);
         }
       }, 50);
       return () => clearTimeout(timeout);
@@ -128,7 +128,7 @@ const StringParameter: React.FC<StringParameterProps> = ({
             {quickPrompts.map((quickPrompt, index) => (
               <button
                 key={quickPrompt.id}
-                ref={index === 1 ? secondQuickStartRef : undefined}
+                ref={index === 0 ? firstQuickStartRef : undefined}
                 onClick={() => handlePromptSelect(quickPrompt)}
                 className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-purple-50 hover:border-purple-200 border border-gray-200 rounded-lg transition-all duration-200 text-left group h-12"
                 disabled={disabled}

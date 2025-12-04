@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 
 export type OnboardingStep =
-  | 'select-tool' // Step 1: Select AI Image Generator
+  | 'select-tool' // Step 1: Select AI Image Editor
   | 'select-quickstart' // Step 2: Click Quick Start preset
-  | 'generate-image' // Step 3: Click Generate Image button
+  | 'generate-image' // Step 3: Click Edit Image button
   | 'insert-download' // Step 4: Click Insert or Download
   | 'complete'; // Onboarding completed
 
@@ -12,7 +12,7 @@ interface OnboardingState {
   currentStep: OnboardingStep;
 }
 
-const STORAGE_KEY = 'gpt-ai-image-generator-onboarding-completed';
+const STORAGE_KEY = 'gpt-ai-image-editor-onboarding-completed';
 
 export function useOnboarding() {
   const [state, setState] = useState<OnboardingState>({
