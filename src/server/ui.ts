@@ -170,27 +170,6 @@ export const authorizeAddon = () => {
   }
 };
 
-// Function to show help information
-export const showHelp = () => {
-  try {
-    const context = getScriptContext();
-    const ui = getActiveUiForContext(context);
-
-    ui.alert(
-      EXTENSION_NAME,
-      'This add-on helps you generate AI images directly in your Google Workspace documents.\n\n' +
-        'To get started:\n' +
-        '1. Click "🔐 Authorize Add-on" to grant necessary permissions\n' +
-        '2. Refresh the page to see the full menu\n' +
-        '3. Click "Launch" to open the sidebar\n\n' +
-        'For more information, visit our tutorial after authorization.',
-      ui.ButtonSet.OK
-    );
-  } catch (error) {
-    console.error('Error showing help:', error);
-  }
-};
-
 export const onInstall = (e: {
   user: { email: string };
   authMode: string;

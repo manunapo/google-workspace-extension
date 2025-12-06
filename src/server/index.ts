@@ -16,7 +16,6 @@ import {
   openAboutUsDialog,
   openTutorialDialog,
   authorizeAddon,
-  showHelp,
 } from './ui';
 
 // Public functions must be exported as named exports
@@ -30,7 +29,6 @@ export {
   getUserCredits,
   openTutorialDialog,
   authorizeAddon,
-  showHelp,
   executeTool,
   uploadImageAndGetUrl,
   grantReviewCredits,

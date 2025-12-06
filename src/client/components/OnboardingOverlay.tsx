@@ -62,6 +62,18 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({
       return undefined;
     }
 
+    // Auto-scroll to center the target element in the viewport
+    targetElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'center',
+    });
+
+    // Small delay to allow scroll to complete before positioning
+    const scrollTimeout = setTimeout(() => {
+      updatePosition();
+    }, 300);
+
     const updatePosition = () => {
       const rect = targetElement.getBoundingClientRect();
       const popoverRect = popoverRef.current?.getBoundingClientRect();
@@ -147,6 +159,7 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({
     window.addEventListener('scroll', updatePosition, true);
 
     return () => {
+      clearTimeout(scrollTimeout);
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
     };

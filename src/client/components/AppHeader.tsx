@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Menu, Coins } from 'lucide-react';
+import { Coins, ArrowBigLeft } from 'lucide-react';
 import { Tool } from '../../config';
 import { useUserCredits } from '../hooks/useUserCredits';
 
@@ -41,7 +41,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           className="p-1 hover:scale-110 hover:bg-gray-200 rounded transition-colors"
           aria-label="Open menu"
         >
-          <Menu className="h-4 w-4 text-gray-600" />
+          <ArrowBigLeft size={24} className="text-gray-600 fill-gray-600" />
         </button>
       )}
 
